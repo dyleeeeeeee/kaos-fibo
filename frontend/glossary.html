@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glossary - Fibonacci Compression System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <h1 class="nav-logo">Fibonacci Compression</h1>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="glossary.html" class="nav-link active">Glossary</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Content Card -->
+        <div class="content-card">
+            <h1>Technical Glossary</h1>
+            <p>
+                A comprehensive glossary of terms related to Fibonacci compression, data compression theory,
+                and the technical concepts used in this system.
+            </p>
+
+            <h2>Compression & Coding Terms</h2>
+
+            <dl>
+                <div class="glossary-term">
+                    <dt>Compression Ratio</dt>
+                    <dd>
+                        The ratio of the original data size to the compressed data size. A higher compression ratio
+                        indicates more effective compression. Calculated as: Original Size / Compressed Size.
+                        For example, a ratio of 2:1 means the compressed data is half the size of the original.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Fibonacci Coding</dt>
+                    <dd>
+                        A universal code that represents positive integers using binary sequences based on the
+                        Fibonacci sequence. Each number is encoded as a sum of non-consecutive Fibonacci numbers
+                        (Zeckendorf representation) followed by a '11' terminator. Example: 5 is encoded as '00011'.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Fibonacci Sequence</dt>
+                    <dd>
+                        A mathematical sequence where each number is the sum of the two preceding ones, starting
+                        from 1 and 2 (or sometimes 0 and 1). The sequence begins: 1, 2, 3, 5, 8, 13, 21, 34, 55, 89...
+                        Named after Leonardo Fibonacci, an Italian mathematician.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Huffman Coding</dt>
+                    <dd>
+                        A lossless data compression algorithm that assigns variable-length codes to input characters,
+                        with shorter codes assigned to more frequent characters. Developed by David A. Huffman in 1952.
+                        Widely used in file compression formats like ZIP and JPEG.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>LZW (Lempel-Ziv-Welch)</dt>
+                    <dd>
+                        A dictionary-based lossless data compression algorithm that builds a table of strings
+                        encountered in the data and replaces repeated occurrences with shorter codes. Used in
+                        GIF images and UNIX compress utility. Created by Abraham Lempel, Jacob Ziv, and Terry Welch.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Lossless Compression</dt>
+                    <dd>
+                        A class of data compression algorithms that allows the original data to be perfectly
+                        reconstructed from the compressed data. No information is lost during compression.
+                        Essential for applications where data integrity is critical (e.g., text files, executables).
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Lossy Compression</dt>
+                    <dd>
+                        A class of data compression algorithms that achieves better compression by permanently
+                        eliminating some data, typically imperceptible to humans. Used in multimedia files (JPEG, MP3).
+                        Cannot perfectly reconstruct the original data.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Prefix-Free Code</dt>
+                    <dd>
+                        Also called prefix code or instantaneous code. A type of code where no codeword is a prefix
+                        of any other codeword. This property allows for unambiguous decoding without delimiters.
+                        Both Huffman and Fibonacci coding are prefix-free.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Universal Code</dt>
+                    <dd>
+                        A prefix code that maps positive integers to binary strings in a way that can encode
+                        any positive integer. Useful when the probability distribution of data is unknown.
+                        Examples include Elias coding, Fibonacci coding, and Golomb coding.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Zeckendorf's Theorem</dt>
+                    <dd>
+                        A theorem stating that every positive integer can be represented uniquely as a sum of
+                        non-consecutive Fibonacci numbers. Named after Belgian mathematician Edouard Zeckendorf.
+                        This theorem forms the mathematical foundation of Fibonacci coding.
+                    </dd>
+                </div>
+            </dl>
+
+            <h2>System & Architecture Terms</h2>
+
+            <dl>
+                <div class="glossary-term">
+                    <dt>API (Application Programming Interface)</dt>
+                    <dd>
+                        A set of protocols and tools for building software applications. In this system, the backend
+                        exposes RESTful API endpoints that the frontend consumes to compress data and retrieve history.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Backend</dt>
+                    <dd>
+                        The server-side component of a web application that handles business logic, data processing,
+                        and database interactions. In this system, the backend is built with Python Flask and
+                        implements the compression algorithms.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Batch Processing</dt>
+                    <dd>
+                        The processing of multiple data items as a group rather than individually. In compression,
+                        this refers to compressing multiple numbers in a single operation and collecting aggregate
+                        statistics (min, max, average).
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Client-Server Architecture</dt>
+                    <dd>
+                        A computing model where client applications (frontend) request services and data from
+                        server applications (backend). The client handles presentation while the server handles
+                        data processing and storage.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Flask</dt>
+                    <dd>
+                        A lightweight Python web framework for building web applications and APIs. Used in this
+                        system to create RESTful endpoints for compression operations and data retrieval.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Frontend</dt>
+                    <dd>
+                        The client-side component of a web application that users interact with directly.
+                        Includes HTML for structure, CSS for styling, and JavaScript for interactivity.
+                        This system uses a glassmorphic design with responsive layout.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Glassmorphism</dt>
+                    <dd>
+                        A UI design trend featuring translucent, frosted-glass-like panels with background blur
+                        effects. Achieved using CSS properties like <code>backdrop-filter: blur()</code> and
+                        semi-transparent backgrounds with <code>rgba()</code>.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>MongoDB</dt>
+                    <dd>
+                        A NoSQL document-oriented database that stores data in flexible JSON-like documents.
+                        MongoDB Atlas is the cloud-hosted version used in this system to store compression
+                        history and metrics.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>REST (Representational State Transfer)</dt>
+                    <dd>
+                        An architectural style for designing networked applications using HTTP requests.
+                        RESTful APIs use standard HTTP methods (GET, POST, PUT, DELETE) to perform operations
+                        on resources identified by URLs.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Three-Tier Architecture</dt>
+                    <dd>
+                        A software architecture pattern that separates applications into three logical layers:
+                        presentation (frontend), application logic (backend), and data storage (database).
+                        Promotes separation of concerns and maintainability.
+                    </dd>
+                </div>
+            </dl>
+
+            <h2>Performance & Metrics Terms</h2>
+
+            <dl>
+                <div class="glossary-term">
+                    <dt>Benchmark</dt>
+                    <dd>
+                        A standard test or set of tests used to compare the performance of different algorithms
+                        or systems. In this system, Fibonacci coding is benchmarked against Huffman and LZW
+                        compression methods.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Checksum / Hash</dt>
+                    <dd>
+                        A small-sized datum derived from a block of digital data for detecting errors or verifying
+                        data integrity. This system uses SHA-256 hashing to verify that compression is truly lossless
+                        by comparing hashes of original and decompressed data.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>CPU Time</dt>
+                    <dd>
+                        The amount of time the CPU spent actively processing a task, excluding time spent waiting
+                        for I/O operations. Measured to assess computational efficiency of the compression algorithm.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Latency</dt>
+                    <dd>
+                        The time delay between a request and the corresponding response. Network latency refers
+                        to the time taken for data to travel between client and server. Lower latency means
+                        faster response times.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Memory Usage</dt>
+                    <dd>
+                        The amount of RAM (Random Access Memory) consumed by a process during execution.
+                        Important for assessing resource efficiency, especially when processing large datasets.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Size Reduction Percentage</dt>
+                    <dd>
+                        The percentage decrease in data size after compression. Calculated as:
+                        ((Original Size - Compressed Size) / Original Size) × 100%.
+                        A higher percentage indicates more effective compression.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Throughput</dt>
+                    <dd>
+                        The rate at which data is processed, typically measured in bytes per second (B/s),
+                        kilobytes per second (KB/s), or megabytes per second (MB/s). Higher throughput
+                        indicates better performance.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Time Complexity</dt>
+                    <dd>
+                        A measure of the amount of time an algorithm takes to run as a function of input size.
+                        Expressed using Big O notation (e.g., O(n), O(n log n)). Important for predicting
+                        algorithm performance on large datasets.
+                    </dd>
+                </div>
+            </dl>
+
+            <h2>Data & Encoding Terms</h2>
+
+            <dl>
+                <div class="glossary-term">
+                    <dt>Binary</dt>
+                    <dd>
+                        A base-2 number system using only two digits: 0 and 1. All digital data is ultimately
+                        stored and processed in binary format. Compression algorithms convert data into
+                        efficient binary representations.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Bit</dt>
+                    <dd>
+                        The smallest unit of data in computing, representing either 0 or 1. Eight bits make
+                        one byte. Compression effectiveness is often measured by the number of bits needed
+                        to represent data.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Byte</dt>
+                    <dd>
+                        A unit of digital information consisting of 8 bits. Can represent 256 different values
+                        (0-255). File sizes are typically measured in bytes, kilobytes (KB), megabytes (MB), etc.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Codeword</dt>
+                    <dd>
+                        A sequence of symbols (usually binary digits) that represents a specific value or character
+                        in a coding scheme. In Fibonacci coding, each positive integer has a unique codeword ending
+                        in '11'.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Dataset</dt>
+                    <dd>
+                        A collection of related data points or values. In this system, datasets consist of
+                        comma-separated positive integers that are compressed using Fibonacci coding.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Delimiter</dt>
+                    <dd>
+                        A character or sequence used to separate data items. In input parsing, commas serve as
+                        delimiters between numbers. Prefix-free codes like Fibonacci don't need explicit delimiters
+                        between codewords.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Encoding</dt>
+                    <dd>
+                        The process of converting data from one format to another. In compression, encoding
+                        transforms original data into a compressed representation. Decoding reverses this process.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Entropy</dt>
+                    <dd>
+                        In information theory, a measure of the unpredictability or randomness in data.
+                        Higher entropy means less redundancy and typically harder to compress. Shannon entropy
+                        defines the theoretical limit of lossless compression.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Numerical Data</dt>
+                    <dd>
+                        Data consisting of numbers rather than text or other types. This system specializes in
+                        compressing positive integer numerical datasets, making it ideal for sensor readings,
+                        timestamps, IDs, and similar data.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Self-Synchronizing Code</dt>
+                    <dd>
+                        A code where the decoder can recover from errors or dropped data by finding the next
+                        valid codeword boundary. Fibonacci coding is self-synchronizing because the '11' terminator
+                        uniquely identifies codeword boundaries.
+                    </dd>
+                </div>
+            </dl>
+
+            <h2>Web Technologies</h2>
+
+            <dl>
+                <div class="glossary-term">
+                    <dt>AJAX (Asynchronous JavaScript and XML)</dt>
+                    <dd>
+                        A technique for creating dynamic web pages by exchanging data with servers asynchronously
+                        without reloading the page. Modern implementations use the Fetch API with JSON instead of XML.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>CSS (Cascading Style Sheets)</dt>
+                    <dd>
+                        A stylesheet language used to describe the presentation of HTML documents. Controls
+                        layout, colors, fonts, and visual effects like the glassmorphism used in this interface.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>DOM (Document Object Model)</dt>
+                    <dd>
+                        A programming interface for web documents that represents the page structure as a tree
+                        of objects. JavaScript manipulates the DOM to dynamically update page content without
+                        reloading.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Fetch API</dt>
+                    <dd>
+                        A modern JavaScript interface for making HTTP requests to servers. Used in this system
+                        to send compression requests to the backend and retrieve historical data.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>HTML (HyperText Markup Language)</dt>
+                    <dd>
+                        The standard markup language for creating web pages. Defines the structure and content
+                        of web documents using elements like headings, paragraphs, forms, and tables.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>JavaScript</dt>
+                    <dd>
+                        A high-level programming language that enables interactive web pages. Used in this system
+                        for client-side validation, API calls, dynamic UI updates, and user interaction handling.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>JSON (JavaScript Object Notation)</dt>
+                    <dd>
+                        A lightweight data interchange format that's easy for humans to read and machines to parse.
+                        Used for communication between frontend and backend in this system.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>Responsive Design</dt>
+                    <dd>
+                        A web design approach that ensures web pages render well on different devices and screen
+                        sizes. Uses flexible layouts, images, and CSS media queries to adapt to various viewports.
+                    </dd>
+                </div>
+
+                <div class="glossary-term">
+                    <dt>SPA (Single Page Application)</dt>
+                    <dd>
+                        A web application that dynamically updates content without reloading the entire page.
+                        While this system uses multiple HTML files, it employs SPA techniques for dynamic
+                        content updates.
+                    </dd>
+                </div>
+            </dl>
+
+            <div class="footer">
+                <p>Powered by <strong>University of Port-Harcourt</strong></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

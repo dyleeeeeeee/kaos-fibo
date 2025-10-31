@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibonacci Compression System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <h1 class="nav-logo">Fibonacci Compression</h1>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="glossary.html" class="nav-link">Glossary</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Main Card -->
+        <div class="glass-card">
+            <!-- Header -->
+            <h2 class="card-header">USER DATA INPUT</h2>
+            
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="manual">📝 Data String</button>
+                <button class="tab-btn" data-tab="paste">📋 Paste CSV</button>
+                <button class="tab-btn" data-tab="file">📁 Upload CSV</button>
+            </div>
+
+            <!-- Manual Input Tab (Data String) -->
+            <div id="manualTab" class="tab-content active">
+                <!-- Input Section -->
+                <div class="input-section">
+                    <input 
+                        type="text" 
+                        id="dataInput" 
+                        class="data-input" 
+                        placeholder="Enter comma-separated numbers..."
+                        aria-label="Data input field"
+                    >
+                    <p class="input-hint">💡 Quick entry: 1,2,3,4,5 (comma-separated positive integers)</p>
+                </div>
+
+                <!-- Compress Button -->
+                <button id="compressBtn" class="compress-btn">COMPRESS</button>
+            </div>
+
+            <!-- Paste CSV Tab -->
+            <div id="pasteTab" class="tab-content">
+                <!-- CSV Paste Section -->
+                <div class="csv-paste-section">
+                    <label for="csvTextarea" class="csv-label">Paste CSV Content:</label>
+                    <textarea 
+                        id="csvTextarea" 
+                        class="csv-textarea" 
+                        placeholder="Paste your CSV data here...&#10;&#10;Example:&#10;Number&#10;1&#10;2&#10;3&#10;5&#10;8&#10;&#10;or&#10;&#10;ID,Value,Count&#10;1,100,5&#10;2,200,10"
+                        aria-label="CSV paste area"
+                    ></textarea>
+                    <p class="input-hint">💡 Paste CSV content from spreadsheets, files, or clipboard. Headers are automatically detected and skipped.</p>
+                    
+                    <!-- Preview Section -->
+                    <div id="csvPreview" class="csv-preview hidden">
+                        <div class="preview-header">
+                            <span class="preview-title">📊 Preview:</span>
+                            <span id="previewCount" class="preview-count"></span>
+                        </div>
+                        <div id="previewNumbers" class="preview-numbers"></div>
+                    </div>
+                </div>
+
+                <!-- Compress Button -->
+                <button id="compressCsvBtn" class="compress-btn">COMPRESS CSV</button>
+            </div>
+
+            <!-- File Upload Tab -->
+            <div id="fileTab" class="tab-content">
+                <!-- File Upload Section -->
+                <div class="file-upload-section">
+                    <div class="file-input-wrapper">
+                        <input 
+                            type="file" 
+                            id="fileInput" 
+                            class="file-input" 
+                            accept=".csv"
+                            aria-label="File upload input"
+                        >
+                        <label for="fileInput" class="file-input-label">
+                            <span class="file-icon">📁</span>
+                            <span class="file-text">Choose CSV File</span>
+                        </label>
+                    </div>
+                    <p class="input-hint">Supported format: CSV (comma-separated values with numerical data)</p>
+                    
+                    <!-- File Info Display -->
+                    <div id="fileInfo" class="file-info hidden">
+                        <div class="file-details">
+                            <span class="file-name" id="fileName"></span>
+                            <span class="file-size" id="fileSize"></span>
+                        </div>
+                        <button id="clearFile" class="clear-file-btn">✕</button>
+                    </div>
+                </div>
+
+                <!-- Compress Button -->
+                <button id="compressFileBtn" class="compress-btn">COMPRESS FILE</button>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="loading-indicator hidden">
+                <div class="spinner"></div>
+                <p>Compressing data...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="error-message hidden"></div>
+
+            <!-- Metrics Display Area -->
+            <div id="metricsArea" class="metrics-area hidden">
+                <div class="metrics-header">
+                    <h3>Compression Results</h3>
+                    <button id="toggleAdvanced" class="toggle-btn">Show Advanced</button>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+
+                <!-- Quick Metrics -->
+                <div class="quick-metrics">
+                    <div class="metric-card">
+                        <span class="metric-label">Compression Ratio</span>
+                        <span class="metric-value" id="compressionRatio">-</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Size Reduction</span>
+                        <span class="metric-value" id="sizeReduction">-</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Time Taken</span>
+                        <span class="metric-value" id="timeTaken">-</span>
+                    </div>
+                </div>
+
+                <!-- Detailed Metrics (toggleable) -->
+                <div id="advancedMetrics" class="advanced-metrics hidden">
+                    <div class="metrics-grid">
+                        <!-- Size Metrics -->
+                        <div class="metric-section">
+                            <h4>📊 Size Metrics</h4>
+                            <div class="metric-row">
+                                <span>Original Size:</span>
+                                <span id="originalSize">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Compressed Size:</span>
+                                <span id="compressedSize">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Bytes Saved:</span>
+                                <span id="bytesSaved">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Performance Metrics -->
+                        <div class="metric-section">
+                            <h4>⚡ Performance</h4>
+                            <div class="metric-row">
+                                <span>Compression Time:</span>
+                                <span id="compressionTime">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Compression Speed:</span>
+                                <span id="compressionSpeed">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Throughput:</span>
+                                <span id="throughput">-</span>
+                            </div>
+                        </div>
+
+                        <!-- File Details -->
+                        <div class="metric-section">
+                            <h4>📄 File Details</h4>
+                            <div class="metric-row">
+                                <span>Data Type:</span>
+                                <span id="dataType">Numerical</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Method:</span>
+                                <span id="method">Fibonacci Coding</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Numbers Count:</span>
+                                <span id="numbersCount">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Algorithm Specific -->
+                        <div class="metric-section">
+                            <h4>🔢 Algorithm Details</h4>
+                            <div class="metric-row">
+                                <span>Max Fibonacci Used:</span>
+                                <span id="maxFibonacci">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Encoding Method:</span>
+                                <span>Zeckendorf's Theorem</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Prefix-Free:</span>
+                                <span>Yes (ends with '11')</span>
+                            </div>
+                        </div>
+
+                        <!-- Comparative Metrics -->
+                        <div class="metric-section">
+                            <h4>📈 Comparative Analysis</h4>
+                            <div class="metric-row">
+                                <span>vs Huffman:</span>
+                                <span id="vsHuffman">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>vs LZW:</span>
+                                <span id="vsLZW">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Best Method:</span>
+                                <span id="bestMethod">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Integrity -->
+                        <div class="metric-section">
+                            <h4>🔒 Integrity</h4>
+                            <div class="metric-row">
+                                <span>Original SHA-256:</span>
+                                <span id="originalHash" class="hash-text">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Compressed SHA-256:</span>
+                                <span id="compressedHash" class="hash-text">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Lossless:</span>
+                                <span class="success-text">✓ Verified</span>
+                            </div>
+                        </div>
+
+                        <!-- Resource Usage -->
+                        <div class="metric-section">
+                            <h4>💻 Resource Usage</h4>
+                            <div class="metric-row">
+                                <span>CPU Time:</span>
+                                <span id="cpuTime">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Memory Used:</span>
+                                <span id="memoryUsed">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Network Latency:</span>
+                                <span id="networkLatency">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Batch Statistics -->
+                        <div class="metric-section">
+                            <h4>📦 Batch Statistics</h4>
+                            <div class="metric-row">
+                                <span>Min Value:</span>
+                                <span id="minValue">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Max Value:</span>
+                                <span id="maxValue">-</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>Average Value:</span>
+                                <span id="avgValue">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Table -->
+            <div class="table-container">
+                <h3 class="table-header">📊 Compression History</h3>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Input</th>
+                            <th>Size</th>
+                            <th>Ratio</th>
+                            <th>Reduction</th>
+                            <th>Time</th>
+                            <th>Speed</th>
+                            <th>Best Method</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- Table rows will be dynamically inserted here -->
+                    </tbody>
+                </table>
+                <div id="noHistory" class="no-history">
+                    No compression history yet. Start by compressing some data!
+                </div>
+            </div>
+            
+            <!-- Metrics Detail Modal -->
+            <div id="metricsModal" class="modal hidden">
+                <div class="modal-content">
+                    <span class="modal-close" id="modalClose">&times;</span>
+                    <h3>Detailed Metrics</h3>
+                    <div id="modalMetricsContent" class="modal-metrics">
+                        <!-- Detailed metrics will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <p>Powered by <strong>University of Port-Harcourt</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

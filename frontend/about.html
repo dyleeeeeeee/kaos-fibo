@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Fibonacci Compression System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <h1 class="nav-logo">Fibonacci Compression</h1>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link active">About</a>
+                <a href="glossary.html" class="nav-link">Glossary</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Content Card -->
+        <div class="content-card">
+            <h1>About Fibonacci Compression</h1>
+            <p>
+                This system implements a novel approach to compressing numerical datasets using Fibonacci coding,
+                a universal code that makes use of Fibonacci numbers. This project explores the application of
+                this mathematical concept in web-based data compression systems.
+            </p>
+
+            <h2>Project Overview</h2>
+            <p>
+                The Fibonacci Compression System is a web-based application designed to compress large numerical
+                datasets using Fibonacci coding. The system provides a modern, user-friendly interface for data
+                compression while offering detailed metrics and comparative analysis with other compression methods.
+            </p>
+
+            <h3>Key Features</h3>
+            <ul>
+                <li><strong>Lossless Compression:</strong> Ensures complete data integrity with no information loss</li>
+                <li><strong>Fibonacci Coding:</strong> Based on Zeckendorf's theorem for optimal representation</li>
+                <li><strong>Real-time Processing:</strong> Instant compression with detailed performance metrics</li>
+                <li><strong>Comparative Analysis:</strong> Benchmarks against Huffman and LZW algorithms</li>
+                <li><strong>Modern UI:</strong> Glassmorphic design with responsive layout</li>
+                <li><strong>Comprehensive Metrics:</strong> Detailed statistics including size, speed, and efficiency</li>
+            </ul>
+
+            <h2>Fibonacci Coding Algorithm</h2>
+            <p>
+                Fibonacci coding is a universal code which encodes positive integers into binary code words.
+                It is based on the Fibonacci sequence and uses Zeckendorf's representation.
+            </p>
+
+            <h3>How It Works</h3>
+            <p>
+                Each positive integer can be represented uniquely as a sum of non-consecutive Fibonacci numbers
+                (Zeckendorf's theorem). The Fibonacci code for an integer is the binary sequence representing
+                which Fibonacci numbers are included in this sum, followed by an additional '1' as a terminator.
+            </p>
+
+            <h3>Key Properties</h3>
+            <ul>
+                <li><strong>Prefix-free:</strong> No codeword is a prefix of another, enabling unambiguous decoding</li>
+                <li><strong>Self-synchronizing:</strong> The '11' terminator allows easy boundary detection</li>
+                <li><strong>Efficient for small numbers:</strong> Shorter codes for smaller integers</li>
+                <li><strong>No consecutive 1s:</strong> Except for the terminating '11', adhering to Zeckendorf's theorem</li>
+            </ul>
+
+            <h3>Example Encodings</h3>
+            <pre><code>Number | Fibonacci Code
+-------|---------------
+   1   |     11
+   2   |    011
+   3   |   0011
+   4   |   1011
+   5   |  00011
+   6   |  10011
+   7   |  01011
+   8   | 000011</code></pre>
+
+            <h2>Literature Review</h2>
+            <p>
+                Data compression has been a fundamental area of computer science research for decades.
+                The field encompasses various approaches, from statistical methods to dictionary-based techniques.
+            </p>
+
+            <h3>Historical Context</h3>
+            <p>
+                <strong>Huffman Coding (1952):</strong> David Huffman developed optimal prefix codes based on
+                character frequency. While highly effective for text compression, it requires frequency analysis
+                and doesn't naturally handle numerical data.
+            </p>
+            <p>
+                <strong>LZW Algorithm (1984):</strong> Lempel-Ziv-Welch compression builds a dictionary of
+                patterns and is widely used in GIF images and UNIX compress. It excels at finding repeated
+                patterns but may be less efficient for numerical datasets.
+            </p>
+            <p>
+                <strong>Fibonacci Coding (1960s):</strong> Though the concept dates back further, modern
+                applications of Fibonacci coding emerged in the 1960s. It represents a unique approach
+                based on number theory rather than statistical or pattern-based methods.
+            </p>
+
+            <h3>Related Works</h3>
+            <div class="reference-list">
+                <div class="reference-item">
+                    <strong>Fraenkel, A. S., & Klein, S. T. (1996)</strong><br>
+                    "Robust universal complete codes for transmission and compression."<br>
+                    <em>Discrete Applied Mathematics, 64(1), 31-55.</em><br>
+                    Explores universal codes including Fibonacci coding and their applications in data transmission.
+                </div>
+                
+                <div class="reference-item">
+                    <strong>Apostolico, A., & Fraenkel, A. S. (1987)</strong><br>
+                    "Robust transmission of unbounded strings using Fibonacci representations."<br>
+                    <em>IEEE Transactions on Information Theory, 33(2), 238-245.</em><br>
+                    Discusses the robustness and self-synchronizing properties of Fibonacci codes.
+                </div>
+                
+                <div class="reference-item">
+                    <strong>Zeckendorf, E. (1972)</strong><br>
+                    "Représentation des nombres naturels par une somme de nombres de Fibonacci ou de nombres de Lucas."<br>
+                    <em>Bulletin de la Société Royale des Sciences de Liège, 41, 179-182.</em><br>
+                    The foundational theorem stating every positive integer has a unique representation as a sum of non-consecutive Fibonacci numbers.
+                </div>
+                
+                <div class="reference-item">
+                    <strong>Salomon, D. (2007)</strong><br>
+                    "Data Compression: The Complete Reference" (4th ed.).<br>
+                    <em>Springer-Verlag London.</em><br>
+                    Comprehensive reference covering various compression algorithms including universal codes.
+                </div>
+                
+                <div class="reference-item">
+                    <strong>Klein, S. T., & Ben-Nissan, M. K. (2008)</strong><br>
+                    "On the usefulness of Fibonacci compression codes."<br>
+                    <em>The Computer Journal, 53(6), 701-716.</em><br>
+                    Analyzes practical applications and effectiveness of Fibonacci coding in modern systems.
+                </div>
+            </div>
+
+            <h2>System Architecture</h2>
+            <p>
+                The Fibonacci Compression System follows a three-tier architecture:
+            </p>
+            
+            <h3>Presentation Layer (Frontend)</h3>
+            <ul>
+                <li>HTML5, CSS3 with glassmorphic design</li>
+                <li>Vanilla JavaScript for dynamic interactions</li>
+                <li>Responsive design for all device sizes</li>
+                <li>Real-time data visualization</li>
+            </ul>
+
+            <h3>Application Layer (Backend)</h3>
+            <ul>
+                <li>Python Flask RESTful API</li>
+                <li>Fibonacci coding algorithm implementation</li>
+                <li>Comparative analysis with Huffman and LZW</li>
+                <li>Performance metrics collection</li>
+            </ul>
+
+            <h3>Data Layer (Database)</h3>
+            <ul>
+                <li>MongoDB Atlas cloud database</li>
+                <li>Compression history logging</li>
+                <li>Metrics storage and retrieval</li>
+                <li>Scalable document-based storage</li>
+            </ul>
+
+            <h2>Evaluation Metrics</h2>
+            <p>
+                The system evaluates compression performance using multiple criteria:
+            </p>
+            
+            <h3>Size Metrics</h3>
+            <ul>
+                <li><strong>Compression Ratio:</strong> Original size / Compressed size</li>
+                <li><strong>Size Reduction:</strong> Percentage of space saved</li>
+                <li><strong>Bytes Saved:</strong> Absolute reduction in storage</li>
+            </ul>
+
+            <h3>Performance Metrics</h3>
+            <ul>
+                <li><strong>Compression Time:</strong> Time taken to compress data</li>
+                <li><strong>Throughput:</strong> Data processed per unit time</li>
+                <li><strong>Resource Usage:</strong> CPU and memory consumption</li>
+            </ul>
+
+            <h3>Comparative Metrics</h3>
+            <ul>
+                <li><strong>vs Huffman:</strong> Comparison with statistical coding</li>
+                <li><strong>vs LZW:</strong> Comparison with dictionary-based coding</li>
+                <li><strong>Best Method:</strong> Identifies optimal algorithm for given data</li>
+            </ul>
+
+            <h2>Project Objectives</h2>
+            <ol>
+                <li><strong>Study Principles:</strong> Understand Fibonacci coding and Zeckendorf's theorem</li>
+                <li><strong>Implement Algorithm:</strong> Create efficient Python implementation</li>
+                <li><strong>Web Integration:</strong> Build modern web-based interface</li>
+                <li><strong>Comparative Analysis:</strong> Benchmark against established methods</li>
+                <li><strong>Performance Evaluation:</strong> Measure and optimize system performance</li>
+            </ol>
+
+            <h2>Scope & Limitations</h2>
+            
+            <h3>Scope</h3>
+            <ul>
+                <li>Lossless compression of positive integer datasets</li>
+                <li>Web-based client-server architecture</li>
+                <li>Real-time compression and decompression</li>
+                <li>Comprehensive performance metrics</li>
+                <li>Educational and demonstrative purposes</li>
+            </ul>
+
+            <h3>Limitations</h3>
+            <ul>
+                <li>Only supports positive integers (no floating-point numbers)</li>
+                <li>Not optimized for very large datasets (>10,000 numbers)</li>
+                <li>No built-in encryption or security features</li>
+                <li>Prototype system not intended for production deployment</li>
+                <li>Limited to numerical data types</li>
+            </ul>
+
+            <h2>Future Enhancements</h2>
+            <ul>
+                <li><strong>Hybrid Approaches:</strong> Combine Fibonacci with other compression methods</li>
+                <li><strong>Machine Learning:</strong> Adaptive compression based on data patterns</li>
+                <li><strong>Parallel Processing:</strong> Multi-threaded compression for large datasets</li>
+                <li><strong>File Upload:</strong> Support for CSV and other file formats</li>
+                <li><strong>Batch Processing:</strong> Queue system for multiple compression jobs</li>
+                <li><strong>Visualization:</strong> Interactive charts for compression analysis</li>
+                <li><strong>API Documentation:</strong> Swagger/OpenAPI integration</li>
+            </ul>
+
+            <h2>Technical Stack</h2>
+            <div class="metrics-grid">
+                <div class="metric-section">
+                    <h4>Frontend</h4>
+                    <ul>
+                        <li>HTML5</li>
+                        <li>CSS3 (Glassmorphism)</li>
+                        <li>Vanilla JavaScript</li>
+                        <li>Fetch API</li>
+                    </ul>
+                </div>
+                
+                <div class="metric-section">
+                    <h4>Backend</h4>
+                    <ul>
+                        <li>Python 3.9+</li>
+                        <li>Flask Framework</li>
+                        <li>PyMongo</li>
+                        <li>NumPy (optional)</li>
+                    </ul>
+                </div>
+                
+                <div class="metric-section">
+                    <h4>Database</h4>
+                    <ul>
+                        <li>MongoDB Atlas</li>
+                        <li>Cloud-hosted</li>
+                        <li>Document-based</li>
+                        <li>Scalable storage</li>
+                    </ul>
+                </div>
+                
+                <div class="metric-section">
+                    <h4>Deployment</h4>
+                    <ul>
+                        <li>Heroku / Vercel</li>
+                        <li>GitHub Repository</li>
+                        <li>Continuous Integration</li>
+                        <li>Environment Variables</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>References</h2>
+            <div class="reference-list">
+                <div class="reference-item">
+                    <strong>Huffman, D. A. (1952).</strong>
+                    "A method for the construction of minimum-redundancy codes."
+                    <em>Proceedings of the IRE, 40(9), 1098-1101.</em>
+                </div>
+                
+                <div class="reference-item">
+                    <strong>Welch, T. A. (1984).</strong>
+                    "A technique for high-performance data compression."
+                    <em>Computer, 17(6), 8-19.</em>
+                </div>
+                
+                <div class="reference-item">
+                    <strong>Storer, J. A., & Szymanski, T. G. (1982).</strong>
+                    "Data compression via textual substitution."
+                    <em>Journal of the ACM (JACM), 29(4), 928-951.</em>
+                </div>
+                
+                <div class="reference-item">
+                    <strong>Cover, T. M., & Thomas, J. A. (2006).</strong>
+                    "Elements of Information Theory" (2nd ed.).
+                    <em>Wiley-Interscience.</em>
+                </div>
+                
+                <div class="reference-item">
+                    <strong>Wikipedia Contributors.</strong>
+                    "Fibonacci coding."
+                    <em>Wikipedia, The Free Encyclopedia.</em>
+                    Retrieved from https://en.wikipedia.org/wiki/Fibonacci_coding
+                </div>
+            </div>
+
+            <h2>Acknowledgments</h2>
+            <p>
+                This project was developed as an educational demonstration of Fibonacci coding principles
+                applied to web-based compression systems. Special thanks to the open-source community
+                for providing the tools and frameworks that made this implementation possible.
+            </p>
+
+            <div class="footer">
+                <p>Powered by <strong>University of Port-Harcourt</strong></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
