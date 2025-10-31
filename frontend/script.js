@@ -6,7 +6,7 @@
 // Configuration
 const CONFIG = {
     // Backend API base URL - update this to match your backend server
-    API_BASE_URL: 'http://localhost:5000',
+    API_BASE_URL: 'https://kaos-fibo-production.up.railway.app',
     
     // API Endpoints
     ENDPOINTS: {
