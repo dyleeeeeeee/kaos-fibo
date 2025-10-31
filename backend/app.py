@@ -33,7 +33,21 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
+
+# Enable CORS for frontend communication
+# Allow both local development and production frontend (Cloudflare Pages)
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "http://localhost:8000",
+            "http://localhost:3000", 
+            "http://127.0.0.1:8000",
+            "https://fib-front.pages.dev"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 # MongoDB Configuration
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
