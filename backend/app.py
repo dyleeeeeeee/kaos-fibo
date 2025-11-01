@@ -579,6 +579,12 @@ def compress_file():
         
         return jsonify(result), 200
         
+    except TimeoutError as e:
+        print(f"File compression timeout: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Compression took too long. Please try with a smaller file.'
+        }), 504
     except Exception as e:
         print(f"File compression error: {e}")
         import traceback
