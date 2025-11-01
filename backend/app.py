@@ -6,7 +6,10 @@ with comparative analysis against Huffman and LZW algorithms.
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
+from bson import ObjectId
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
@@ -16,6 +19,7 @@ import psutil
 import tracemalloc
 import csv
 import io
+import bcrypt
 from dotenv import load_dotenv
 
 # Import compression algorithms
@@ -34,6 +38,13 @@ load_dotenv()
 # Initialize Flask app
 app = Flask(__name__)
 
+# JWT Configuration
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # Tokens don't expire
+
+# Initialize JWT
+jwt = JWTManager(app)
+
 # Enable CORS for frontend communication
 # Allow both local development and production frontend (Cloudflare Pages)
 CORS(app, resources={
@@ -45,7 +56,7 @@ CORS(app, resources={
             "https://fib-front.pages.dev"
         ],
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
+        "allow_headers": ["Content-Type", "Authorization"]
     }
 })
 
@@ -53,6 +64,7 @@ CORS(app, resources={
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
 DB_NAME = os.getenv('DB_NAME', 'fibonacci_compression')
 COLLECTION_NAME = os.getenv('COLLECTION_NAME', 'compression_logs')
+USERS_COLLECTION_NAME = os.getenv('USERS_COLLECTION_NAME', 'users')
 
 # Configure DNS resolver to use Google DNS (fixes Windows DNS timeout issues)
 try:
@@ -71,10 +83,106 @@ try:
     mongo_client.admin.command('ping')
     db = mongo_client[DB_NAME]
     collection = db[COLLECTION_NAME]
+    users_collection = db[USERS_COLLECTION_NAME]
     print(f"✓ Connected to MongoDB: {DB_NAME}")
 except Exception as e:
     print(f"✗ MongoDB connection failed: {e}")
     collection = None
+    users_collection = None
+
+# ================================================
+# AUTHENTICATION UTILITIES
+# ================================================
+
+def hash_password(password):
+    """
+    Hash a password using bcrypt
+    
+    Args:
+        password (str): Plain text password
+        
+    Returns:
+        bytes: Hashed password
+    """
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+def check_password(password, hashed):
+    """
+    Verify a password against its hash
+    
+    Args:
+        password (str): Plain text password
+        hashed (bytes): Hashed password
+        
+    Returns:
+        bool: True if password matches
+    """
+    return bcrypt.checkpw(password.encode('utf-8'), hashed)
+
+def create_user(username, email, password):
+    """
+    Create a new user in the database
+    
+    Args:
+        username (str): Username
+        email (str): Email address
+        password (str): Plain text password
+        
+    Returns:
+        dict: User document or None if creation failed
+    """
+    if users_collection is None:
+        return None
+        
+    # Check if user already exists
+    if users_collection.find_one({'$or': [{'username': username}, {'email': email}]}):
+        return None
+    
+    # Create user document
+    user = {
+        'username': username,
+        'email': email,
+        'password_hash': hash_password(password),
+        'created_at': datetime.utcnow(),
+        'last_login': None,
+        'compression_count': 0
+    }
+    
+    result = users_collection.insert_one(user)
+    user['_id'] = result.inserted_id
+    return user
+
+def authenticate_user(username_or_email, password):
+    """
+    Authenticate a user
+    
+    Args:
+        username_or_email (str): Username or email
+        password (str): Plain text password
+        
+    Returns:
+        dict: User document if authenticated, None otherwise
+    """
+    if users_collection is None:
+        return None
+        
+    user = users_collection.find_one({
+        '$or': [
+            {'username': username_or_email},
+            {'email': username_or_email}
+        ]
+    })
+    
+    if user and check_password(password, user['password_hash']):
+        # Update last login
+        users_collection.update_one(
+            {'_id': user['_id']},
+            {'$set': {'last_login': datetime.utcnow()}}
+        )
+        return user
+    
+    return None
+
 
 # ================================================
 # UTILITY FUNCTIONS
@@ -375,6 +483,231 @@ def perform_compression(numbers):
 # API ENDPOINTS
 # ================================================
 
+# ================================================
+# AUTHENTICATION ENDPOINTS
+# ================================================
+
+@app.route('/auth/signup', methods=['POST'])
+def signup():
+    """
+    Register a new user
+    
+    Request Body:
+        {
+            "username": "johndoe",
+            "email": "john@example.com",
+            "password": "password123"
+        }
+    
+    Returns:
+        JSON object with user info and token
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No data provided'
+            }), 400
+        
+        username = data.get('username', '').strip()
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+        
+        # Validate input
+        if not username or not email or not password:
+            return jsonify({
+                'success': False,
+                'error': 'Username, email, and password are required'
+            }), 400
+        
+        if len(username) < 3:
+            return jsonify({
+                'success': False,
+                'error': 'Username must be at least 3 characters long'
+            }), 400
+        
+        if len(password) < 6:
+            return jsonify({
+                'success': False,
+                'error': 'Password must be at least 6 characters long'
+            }), 400
+        
+        # Basic email validation
+        if '@' not in email or '.' not in email:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid email format'
+            }), 400
+        
+        # Create user
+        user = create_user(username, email, password)
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'Username or email already exists'
+            }), 409
+        
+        # Create access token
+        access_token = create_access_token(identity=str(user['_id']))
+        
+        # Remove password hash from response
+        user_response = {
+            'id': str(user['_id']),
+            'username': user['username'],
+            'email': user['email'],
+            'created_at': user['created_at'].isoformat(),
+            'compression_count': user['compression_count']
+        }
+        
+        return jsonify({
+            'success': True,
+            'user': user_response,
+            'access_token': access_token
+        }), 201
+        
+    except Exception as e:
+        print(f"Signup error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Signup failed'
+        }), 500
+
+@app.route('/auth/login', methods=['POST'])
+def login():
+    """
+    Login user
+    
+    Request Body:
+        {
+            "username": "johndoe",  // or email
+            "password": "password123"
+        }
+    
+    Returns:
+        JSON object with user info and token
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No data provided'
+            }), 400
+        
+        username_or_email = data.get('username', '').strip() or data.get('email', '').strip()
+        password = data.get('password', '')
+        
+        if not username_or_email or not password:
+            return jsonify({
+                'success': False,
+                'error': 'Username/email and password are required'
+            }), 400
+        
+        # Authenticate user
+        user = authenticate_user(username_or_email, password)
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid username/email or password'
+            }), 401
+        
+        # Create access token
+        access_token = create_access_token(identity=str(user['_id']))
+        
+        # Remove password hash from response
+        user_response = {
+            'id': str(user['_id']),
+            'username': user['username'],
+            'email': user['email'],
+            'created_at': user['created_at'].isoformat(),
+            'last_login': user['last_login'].isoformat() if user['last_login'] else None,
+            'compression_count': user['compression_count']
+        }
+        
+        return jsonify({
+            'success': True,
+            'user': user_response,
+            'access_token': access_token
+        }), 200
+        
+    except Exception as e:
+        print(f"Login error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Login failed'
+        }), 500
+
+@app.route('/auth/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    """
+    Logout user (client-side token removal)
+    
+    Returns:
+        Success message
+    """
+    return jsonify({
+        'success': True,
+        'message': 'Logged out successfully'
+    }), 200
+
+@app.route('/auth/me', methods=['GET'])
+@jwt_required()
+def get_current_user():
+    """
+    Get current user info
+    
+    Returns:
+        JSON object with user info
+    """
+    try:
+        user_id = get_jwt_identity()
+        
+        if users_collection is None:
+            return jsonify({
+                'success': False,
+                'error': 'Database not connected'
+            }), 503
+        
+        user = users_collection.find_one({'_id': ObjectId(user_id)})
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'User not found'
+            }), 404
+        
+        user_response = {
+            'id': str(user['_id']),
+            'username': user['username'],
+            'email': user['email'],
+            'created_at': user['created_at'].isoformat(),
+            'last_login': user['last_login'].isoformat() if user['last_login'] else None,
+            'compression_count': user['compression_count']
+        }
+        
+        return jsonify({
+            'success': True,
+            'user': user_response
+        }), 200
+        
+    except Exception as e:
+        print(f"Get user error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to get user info'
+        }), 500
+
+
+# ================================================
+# COMPRESSION ENDPOINTS (PROTECTED)
+# ================================================
+
 @app.route('/', methods=['GET'])
 def index():
     """
@@ -408,6 +741,7 @@ def health_check():
 
 
 @app.route('/compress', methods=['POST'])
+@jwt_required()
 def compress():
     """
     Compress a numerical dataset using Fibonacci coding
@@ -454,13 +788,27 @@ def compress():
                     'error': f'Invalid number: {num}. Only positive integers are supported.'
                 }), 400
         
+        # Get current user
+        user_id = get_jwt_identity()
+        
         # Perform compression
         result = perform_compression(numbers)
+        
+        # Increment user's compression count
+        if users_collection is not None:
+            try:
+                users_collection.update_one(
+                    {'_id': ObjectId(user_id)},
+                    {'$inc': {'compression_count': 1}}
+                )
+            except Exception as e:
+                print(f"Failed to update user compression count: {e}")
         
         # Store in database if available
         if collection is not None:
             try:
                 log_entry = {
+                    'user_id': ObjectId(user_id),
                     'raw_input': numbers,
                     'compressed_data': result['compressed_data_full'],
                     'time_taken': result['metrics']['compression_time'],
@@ -490,6 +838,7 @@ def compress():
 
 
 @app.route('/compress-file', methods=['POST'])
+@jwt_required()
 def compress_file():
     """
     Compress a numerical dataset from an uploaded CSV file
@@ -546,8 +895,21 @@ def compress_file():
                 'error': 'No valid numerical data found in file'
             }), 400
         
+        # Get current user
+        user_id = get_jwt_identity()
+        
         # Perform compression
         result = perform_compression(numbers)
+        
+        # Increment user's compression count
+        if users_collection is not None:
+            try:
+                users_collection.update_one(
+                    {'_id': ObjectId(user_id)},
+                    {'$inc': {'compression_count': 1}}
+                )
+            except Exception as e:
+                print(f"Failed to update user compression count: {e}")
         
         # Add file metadata to result
         result['file_info'] = {
@@ -560,6 +922,7 @@ def compress_file():
         if collection is not None:
             try:
                 log_entry = {
+                    'user_id': ObjectId(user_id),
                     'raw_input': numbers[:100],  # Store first 100 numbers to save space
                     'compressed_data': result['compressed_data_full'],
                     'time_taken': result['metrics']['compression_time'],
@@ -643,6 +1006,7 @@ def parse_csv_file(file):
 
 
 @app.route('/logs', methods=['GET'])
+@jwt_required()
 def get_logs():
     """
     Retrieve compression history from database
@@ -661,13 +1025,16 @@ def get_logs():
                 'error': 'Database not connected'
             }), 503
         
+        # Get current user
+        user_id = get_jwt_identity()
+        
         # Get query parameters
         limit = request.args.get('limit', default=100, type=int)
         offset = request.args.get('offset', default=0, type=int)
         
-        # Fetch logs from database
+        # Fetch logs from database for current user only
         logs = list(collection.find(
-            {},
+            {'user_id': ObjectId(user_id)},
             {'_id': 0}  # Exclude MongoDB _id field
         ).sort('timestamp', -1).skip(offset).limit(limit))
         
@@ -687,6 +1054,7 @@ def get_logs():
 
 
 @app.route('/decompress', methods=['POST'])
+@jwt_required()
 def decompress():
     """
     Decompress Fibonacci-encoded data

@@ -15,6 +15,12 @@
                 <a href="index.html" class="nav-link active">Home</a>
                 <a href="about.html" class="nav-link">About</a>
                 <a href="glossary.html" class="nav-link">Glossary</a>
+                <div class="auth-buttons">
+                    <button id="loginBtn" class="auth-btn login-btn">Login</button>
+                    <button id="signupBtn" class="auth-btn signup-btn">Sign Up</button>
+                    <button id="logoutBtn" class="auth-btn logout-btn hidden">Logout</button>
+                    <span id="userInfo" class="user-info hidden"></span>
+                </div>
             </div>
         </div>
     </nav>
@@ -24,7 +30,7 @@
         <!-- Main Card -->
         <div class="glass-card">
             <!-- Header -->
-            <h2 class="card-header">USER DATA INPUT</h2>
+            <h2 class="card-header">COMPRESSION SYSTEM</h2>
             
             <!-- Tab Navigation -->
             <div class="tab-navigation">
@@ -96,6 +102,7 @@
                         </label>
                     </div>
                     <p class="input-hint">Supported format: CSV (comma-separated values with numerical data)</p>
+                    <p class="file-size-limit">Maximum file size: 10MB</p>
                     
                     <!-- File Info Display -->
                     <div id="fileInfo" class="file-info hidden">
@@ -324,6 +331,61 @@
                     <div id="modalMetricsContent" class="modal-metrics">
                         <!-- Detailed metrics will be inserted here -->
                     </div>
+                </div>
+            </div>
+
+            <!-- Authentication Modals -->
+            <!-- Login Modal -->
+            <div id="loginModal" class="modal hidden">
+                <div class="modal-content auth-modal">
+                    <span class="modal-close" id="loginModalClose">&times;</span>
+                    <h3>Login</h3>
+                    <form id="loginForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="loginUsername">Username or Email:</label>
+                            <input type="text" id="loginUsername" class="auth-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password:</label>
+                            <input type="password" id="loginPassword" class="auth-input" required>
+                        </div>
+                        <button type="submit" class="auth-submit-btn">Login</button>
+                    </form>
+                    <p class="auth-switch">
+                        Don't have an account?
+                        <a href="#" id="switchToSignup">Sign up</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Signup Modal -->
+            <div id="signupModal" class="modal hidden">
+                <div class="modal-content auth-modal">
+                    <span class="modal-close" id="signupModalClose">&times;</span>
+                    <h3>Sign Up</h3>
+                    <form id="signupForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="signupUsername">Username:</label>
+                            <input type="text" id="signupUsername" class="auth-input" required minlength="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupEmail">Email:</label>
+                            <input type="email" id="signupEmail" class="auth-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPassword">Password:</label>
+                            <input type="password" id="signupPassword" class="auth-input" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupConfirmPassword">Confirm Password:</label>
+                            <input type="password" id="signupConfirmPassword" class="auth-input" required>
+                        </div>
+                        <button type="submit" class="auth-submit-btn">Sign Up</button>
+                    </form>
+                    <p class="auth-switch">
+                        Already have an account?
+                        <a href="#" id="switchToLogin">Login</a>
+                    </p>
                 </div>
             </div>
 
