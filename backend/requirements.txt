@@ -12,12 +12,12 @@ dnspython==2.4.2
 # Environment Variables Management
 python-dotenv==1.0.0
 
+# Authentication
+bcrypt==4.1.2
+PyJWT==2.8.0
+
 # System Resource Monitoring
 psutil==5.9.6
-
-# Authentication
-Flask-JWT-Extended==4.6.0
-bcrypt==4.1.2
 
 # Testing Framework
 pytest==7.4.3

@@ -25,7 +25,79 @@ const state = {
     isCompressing: false,
     compressionHistory: [],
     selectedFile: null,
+    user: null,
+    token: null,
+    isAuthenticated: false
 };
+
+// ================================================
+// AUTHENTICATION UTILITIES
+// ================================================
+
+function getToken() {
+    return localStorage.getItem('auth_token');
+}
+
+function getUser() {
+    const userData = localStorage.getItem('user_data');
+    return userData ? JSON.parse(userData) : null;
+}
+
+function clearAuth() {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+    state.token = null;
+    state.user = null;
+    state.isAuthenticated = false;
+}
+
+function checkAuth() {
+    const token = getToken();
+    const user = getUser();
+    
+    if (token && user) {
+        state.token = token;
+        state.user = user;
+        state.isAuthenticated = true;
+        updateAuthUI();
+        return true;
+    }
+    
+    return false;
+}
+
+function updateAuthUI() {
+    const loginLink = document.getElementById('loginLink');
+    const userMenu = document.getElementById('userMenu');
+    const userName = document.getElementById('userName');
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    const welcomeUserName = document.getElementById('welcomeUserName');
+    
+    if (state.isAuthenticated && state.user) {
+        // Hide login link, show user menu
+        if (loginLink) loginLink.classList.add('hidden');
+        if (userMenu) userMenu.classList.remove('hidden');
+        if (userName) userName.textContent = state.user.email;
+        
+        // Show welcome message on index page
+        if (welcomeMessage && welcomeUserName) {
+            welcomeMessage.classList.remove('hidden');
+            welcomeUserName.textContent = state.user.email;
+        }
+    } else {
+        // Show login link, hide user menu
+        if (loginLink) loginLink.classList.remove('hidden');
+        if (userMenu) userMenu.classList.add('hidden');
+        
+        // Hide welcome message
+        if (welcomeMessage) welcomeMessage.classList.add('hidden');
+    }
+}
+
+function logout() {
+    clearAuth();
+    window.location.href = 'login.html';
+}
 
 // ================================================
 // DOM ELEMENTS
@@ -99,230 +171,30 @@ const elements = {
     maxValue: document.getElementById('maxValue'),
     avgValue: document.getElementById('avgValue'),
     
-    // Authentication
-    loginBtn: document.getElementById('loginBtn'),
-    signupBtn: document.getElementById('signupBtn'),
-    logoutBtn: document.getElementById('logoutBtn'),
-    userInfo: document.getElementById('userInfo'),
-    
-    // Authentication Modals
-    loginModal: document.getElementById('loginModal'),
-    signupModal: document.getElementById('signupModal'),
-    loginModalClose: document.getElementById('loginModalClose'),
-    signupModalClose: document.getElementById('signupModalClose'),
-    switchToSignup: document.getElementById('switchToSignup'),
-    switchToLogin: document.getElementById('switchToLogin'),
-    
-    // Authentication Forms
-    loginForm: document.getElementById('loginForm'),
-    signupForm: document.getElementById('signupForm'),
-    loginUsername: document.getElementById('loginUsername'),
-    loginPassword: document.getElementById('loginPassword'),
-    signupUsername: document.getElementById('signupUsername'),
-    signupEmail: document.getElementById('signupEmail'),
-    signupPassword: document.getElementById('signupPassword'),
-    signupConfirmPassword: document.getElementById('signupConfirmPassword'),
+    // History Table
+    historyTableBody: document.getElementById('historyTableBody'),
+    noHistory: document.getElementById('noHistory'),
 };
-
-// ================================================
-// AUTHENTICATION UI MANAGEMENT
-// ================================================
-
-// Enable compression features for authenticated users
-function enableCompressionFeatures() {
-    // Remove disabled styling and overlays
-    const overlay = document.querySelector('.auth-required-overlay');
-    if (overlay) overlay.remove();
-    
-    // Re-enable buttons
-    elements.compressBtn.disabled = false;
-    elements.compressCsvBtn.disabled = false;
-    elements.compressFileBtn.disabled = false;
-    
-    // Remove auth-required classes
-    elements.dataInput.classList.remove('auth-required');
-    elements.csvTextarea.classList.remove('auth-required');
-    elements.fileInput.classList.remove('auth-required');
-}
-
-// Disable compression features for unauthenticated users
-function disableCompressionFeatures() {
-    // Add auth-required overlay to the main card
-    const glassCard = document.querySelector('.glass-card');
-    if (!glassCard.querySelector('.auth-required-overlay')) {
-        const overlay = document.createElement('div');
-        overlay.className = 'auth-required-overlay';
-        overlay.innerHTML = `
-            <div class="auth-required-message">
-                <h3>🔐 Login Required</h3>
-                <p>Please sign up or log in to use the compression features.</p>
-                <div class="auth-required-buttons">
-                    <button class="auth-btn login-btn" onclick="showModal(elements.loginModal)">Login</button>
-                    <button class="auth-btn signup-btn" onclick="showModal(elements.signupModal)">Sign Up</button>
-                </div>
-            </div>
-        `;
-        glassCard.appendChild(overlay);
-    }
-    
-    // Disable compression buttons
-    elements.compressBtn.disabled = true;
-    elements.compressCsvBtn.disabled = true;
-    elements.compressFileBtn.disabled = true;
-    
-    // Add visual indication
-    elements.dataInput.classList.add('auth-required');
-    elements.csvTextarea.classList.add('auth-required');
-    elements.fileInput.classList.add('auth-required');
-}
-
-// ================================================
-// AUTHENTICATION STATE MANAGEMENT
-// ================================================
-
-let authState = {
-    isAuthenticated: false,
-    user: null,
-    token: null
-};
-
-// Initialize authentication state from localStorage
-function initializeAuth() {
-    const token = localStorage.getItem('auth_token');
-    const user = localStorage.getItem('auth_user');
-    
-    if (token && user) {
-        try {
-            authState.token = token;
-            authState.user = JSON.parse(user);
-            authState.isAuthenticated = true;
-            updateAuthUI();
-        } catch (e) {
-            // Invalid stored data, clear it
-            clearAuth();
-        }
-    }
-}
-
-// Save authentication state to localStorage
-function saveAuth(token, user) {
-    authState.isAuthenticated = true;
-    authState.token = token;
-    authState.user = user;
-    
-    localStorage.setItem('auth_token', token);
-    localStorage.setItem('auth_user', JSON.stringify(user));
-}
-
-// Clear authentication state
-function clearAuth() {
-    authState.isAuthenticated = false;
-    authState.token = null;
-    authState.user = null;
-    
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-}
-
-// Update UI based on authentication state
-function updateAuthUI() {
-    if (authState.isAuthenticated) {
-        elements.loginBtn.classList.add('hidden');
-        elements.signupBtn.classList.add('hidden');
-        elements.logoutBtn.classList.remove('hidden');
-        elements.userInfo.classList.remove('hidden');
-        elements.userInfo.textContent = `Welcome, ${authState.user.username}!`;
-        
-        // Enable compression features
-        enableCompressionFeatures();
-    } else {
-        elements.loginBtn.classList.remove('hidden');
-        elements.signupBtn.classList.remove('hidden');
-        elements.logoutBtn.classList.add('hidden');
-        elements.userInfo.classList.add('hidden');
-        elements.userInfo.textContent = '';
-        
-        // Disable compression features and show login prompt
-        disableCompressionFeatures();
-    }
-}
-
-// ================================================
-// AUTHENTICATION API CALLS
-// ================================================
-
-// Make authenticated API call
-async function authenticatedFetch(url, options = {}) {
-    if (!authState.token) {
-        throw new Error('Not authenticated');
-    }
-    
-    const headers = {
-        'Authorization': `Bearer ${authState.token}`,
-        ...options.headers
-    };
-    
-    return fetch(url, { ...options, headers });
-}
-
-// Login user
-async function loginUser(usernameOrEmail, password) {
-    const response = await fetch(`${CONFIG.API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username: usernameOrEmail, password })
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-    }
-    
-    return data;
-}
-
-// Signup user
-async function signupUser(username, email, password) {
-    const response = await fetch(`${CONFIG.API_BASE_URL}/auth/signup`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, email, password })
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-        throw new Error(data.error || 'Signup failed');
-    }
-    
-    return data;
-}
-
-// Logout user
-async function logoutUser() {
-    try {
-        await authenticatedFetch(`${CONFIG.API_BASE_URL}/auth/logout`, {
-            method: 'POST'
-        });
-    } catch (e) {
-        // Logout on server may fail, but we clear local state anyway
-        console.log('Server logout failed, clearing local state');
-    }
-    
-    clearAuth();
-    updateAuthUI();
-}
 
 // ================================================
 // INITIALIZATION
 // ================================================
 document.addEventListener('DOMContentLoaded', () => {
-    initializeAuth();
+    // Check authentication status and require login for index page
+    const isIndexPage = window.location.pathname.endsWith('index.html') || 
+                        window.location.pathname.endsWith('/') ||
+                        window.location.pathname === '/kaos-fib/frontend/' ||
+                        window.location.pathname === '/kaos-fib/frontend/index.html';
+    
+    if (isIndexPage && !checkAuth()) {
+        // Redirect to login if not authenticated
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    // For other pages, just update UI based on auth status
+    checkAuth();
+    
     initializeEventListeners();
     loadCompressionHistory();
 });
@@ -366,126 +238,32 @@ function initializeEventListeners() {
         }
     });
     
-    // Authentication event listeners
-    elements.loginBtn.addEventListener('click', () => showModal(elements.loginModal));
-    elements.signupBtn.addEventListener('click', () => showModal(elements.signupModal));
-    elements.logoutBtn.addEventListener('click', logoutUser);
+    // User menu
+    const userMenuTrigger = document.getElementById('userMenuTrigger');
+    const userMenuDropdown = document.getElementById('userMenuDropdown');
+    const logoutBtn = document.getElementById('logoutBtn');
     
-    elements.loginModalClose.addEventListener('click', () => hideModal(elements.loginModal));
-    elements.signupModalClose.addEventListener('click', () => hideModal(elements.signupModal));
-    
-    elements.switchToSignup.addEventListener('click', (e) => {
-        e.preventDefault();
-        hideModal(elements.loginModal);
-        showModal(elements.signupModal);
-    });
-    
-    elements.switchToLogin.addEventListener('click', (e) => {
-        e.preventDefault();
-        hideModal(elements.signupModal);
-        showModal(elements.loginModal);
-    });
-    
-    elements.loginForm.addEventListener('submit', handleLogin);
-    elements.signupForm.addEventListener('submit', handleSignup);
-}
-
-/**
- * Handle login form submission
- */
-async function handleLogin(e) {
-    e.preventDefault();
-    
-    const username = elements.loginUsername.value.trim();
-    const password = elements.loginPassword.value;
-    
-    if (!username || !password) {
-        showError('Please fill in all fields');
-        return;
-    }
-    
-    try {
-        const result = await loginUser(username, password);
-        saveAuth(result.access_token, result.user);
-        updateAuthUI();
-        hideModal(elements.loginModal);
-        elements.loginForm.reset();
+    if (userMenuTrigger && userMenuDropdown) {
+        userMenuTrigger.addEventListener('click', () => {
+            userMenuDropdown.classList.toggle('hidden');
+        });
         
-        // Refresh history since we now have user-specific data
-        await loadCompressionHistory();
-        
-        showSuccess('Login successful!');
-    } catch (error) {
-        showError(error.message);
-    }
-}
-
-/**
- * Handle signup form submission
- */
-async function handleSignup(e) {
-    e.preventDefault();
-    
-    const username = elements.signupUsername.value.trim();
-    const email = elements.signupEmail.value.trim();
-    const password = elements.signupPassword.value;
-    const confirmPassword = elements.signupConfirmPassword.value;
-    
-    if (!username || !email || !password || !confirmPassword) {
-        showError('Please fill in all fields');
-        return;
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.user-menu')) {
+                userMenuDropdown.classList.add('hidden');
+            }
+        });
     }
     
-    if (password !== confirmPassword) {
-        showError('Passwords do not match');
-        return;
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
     }
-    
-    try {
-        const result = await signupUser(username, email, password);
-        saveAuth(result.access_token, result.user);
-        updateAuthUI();
-        hideModal(elements.signupModal);
-        elements.signupForm.reset();
-        
-        showSuccess('Account created successfully!');
-    } catch (error) {
-        showError(error.message);
-    }
-}
-
-/**
- * Show modal
- */
-function showModal(modal) {
-    modal.classList.remove('hidden');
-}
-
-/**
- * Hide modal
- */
-function hideModal(modal) {
-    modal.classList.add('hidden');
-}
-
-/**
- * Show success message
- */
-function showSuccess(message) {
-    // For now, just use the error message area with different styling
-    elements.errorMessage.textContent = message;
-    elements.errorMessage.classList.remove('hidden');
-    elements.errorMessage.style.color = 'var(--success-green)';
-    
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
-        hideError();
-        elements.errorMessage.style.color = 'var(--error-red)';
-    }, 3000);
 }
 
 // ================================================
-
+// TAB SWITCHING
+// ================================================
 /**
  * Switch between manual input and file upload tabs
  * @param {string} tabName - Name of tab to switch to ('manual' or 'file')
@@ -597,13 +375,6 @@ function parseCsvContent(csvContent) {
  * Handle CSV compression from pasted content
  */
 async function handleCsvCompress() {
-    // Check authentication first
-    if (!authState.isAuthenticated) {
-        showError('Please login to use compression features.');
-        showModal(elements.loginModal);
-        return;
-    }
-    
     const csvContent = elements.csvTextarea.value.trim();
     
     if (!csvContent) {
@@ -624,7 +395,6 @@ async function handleCsvCompress() {
         setCompressionState(true);
         hideError();
         
-    try {
         // Prepare request payload
         const payload = {
             data: numbers,
@@ -633,21 +403,13 @@ async function handleCsvCompress() {
         
         // Make API call
         const startTime = performance.now();
-        const response = await (authState.isAuthenticated 
-            ? authenticatedFetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.COMPRESS}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            })
-            : fetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.COMPRESS}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            }));
+        const response = await fetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.COMPRESS}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
         
         const endTime = performance.now();
         const networkLatency = endTime - startTime;
@@ -744,13 +506,6 @@ function clearFileSelection() {
  * Handle file compression
  */
 async function handleFileCompress() {
-    // Check authentication first
-    if (!authState.isAuthenticated) {
-        showError('Please login to use compression features.');
-        showModal(elements.loginModal);
-        return;
-    }
-    
     // Validate file is selected
     if (!state.selectedFile) {
         showError('Please select a file to compress.');
@@ -769,15 +524,10 @@ async function handleFileCompress() {
         
         // Make API call
         const startTime = performance.now();
-        const response = await (authState.isAuthenticated 
-            ? authenticatedFetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.COMPRESS_FILE}`, {
-                method: 'POST',
-                body: formData  // Don't set Content-Type header - browser will set it with boundary
-            })
-            : fetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.COMPRESS_FILE}`, {
-                method: 'POST',
-                body: formData  // Don't set Content-Type header - browser will set it with boundary
-            }));
+        const response = await fetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.COMPRESS_FILE}`, {
+            method: 'POST',
+            body: formData  // Don't set Content-Type header - browser will set it with boundary
+        });
         
         const endTime = performance.now();
         const networkLatency = endTime - startTime;
@@ -817,13 +567,6 @@ async function handleFileCompress() {
  * Main compression handler
  */
 async function handleCompress() {
-    // Check authentication first
-    if (!authState.isAuthenticated) {
-        showError('Please login to use compression features.');
-        showModal(elements.loginModal);
-        return;
-    }
-    
     // Validate input
     const inputValue = elements.dataInput.value.trim();
     if (!inputValue) {
@@ -850,21 +593,13 @@ async function handleCompress() {
         
         // Make API call
         const startTime = performance.now();
-        const response = await (authState.isAuthenticated 
-            ? authenticatedFetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.COMPRESS}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            })
-            : fetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.COMPRESS}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            }));
+        const response = await fetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.COMPRESS}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
         
         const endTime = performance.now();
         const networkLatency = endTime - startTime;
@@ -1033,13 +768,8 @@ function toggleAdvancedMetrics() {
  * Load compression history from backend
  */
 async function loadCompressionHistory() {
-    // Only load history if authenticated
-    if (!authState.isAuthenticated) {
-        return;
-    }
-    
     try {
-        const response = await authenticatedFetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.LOGS}`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.LOGS}`);
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));

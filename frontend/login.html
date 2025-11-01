@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Fibonacci Compression System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <h1 class="nav-logo">Fibonacci Compression</h1>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="glossary.html" class="nav-link">Glossary</a>
+                <a href="login.html" class="nav-link active">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="auth-card">
+            <!-- Auth Toggle -->
+            <div class="auth-toggle">
+                <button class="auth-toggle-btn active" data-mode="login">Login</button>
+                <button class="auth-toggle-btn" data-mode="signup">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active">
+                <h2 class="auth-title">Welcome Back</h2>
+                <p class="auth-subtitle">Log in to access your compression history</p>
+
+                <div class="form-group">
+                    <label for="loginEmail" class="form-label">Email</label>
+                    <input 
+                        type="email" 
+                        id="loginEmail" 
+                        class="form-input" 
+                        placeholder="your@email.com"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">Password</label>
+                    <input 
+                        type="password" 
+                        id="loginPassword" 
+                        class="form-input" 
+                        placeholder="••••••••"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="auth-btn" id="loginBtn">
+                    <span class="btn-text">Log In</span>
+                    <span class="btn-loader hidden">
+                        <div class="spinner-small"></div>
+                    </span>
+                </button>
+
+                <div id="loginError" class="auth-error hidden"></div>
+                <div id="loginSuccess" class="auth-success hidden"></div>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signupForm" class="auth-form">
+                <h2 class="auth-title">Create Account</h2>
+                <p class="auth-subtitle">Sign up to start compressing data</p>
+
+                <div class="form-group">
+                    <label for="signupEmail" class="form-label">Email</label>
+                    <input 
+                        type="email" 
+                        id="signupEmail" 
+                        class="form-input" 
+                        placeholder="your@email.com"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="signupPassword" class="form-label">Password</label>
+                    <input 
+                        type="password" 
+                        id="signupPassword" 
+                        class="form-input" 
+                        placeholder="••••••••"
+                        minlength="6"
+                        required
+                    >
+                    <p class="form-hint">Minimum 6 characters</p>
+                </div>
+
+                <button type="submit" class="auth-btn" id="signupBtn">
+                    <span class="btn-text">Sign Up</span>
+                    <span class="btn-loader hidden">
+                        <div class="spinner-small"></div>
+                    </span>
+                </button>
+
+                <div id="signupError" class="auth-error hidden"></div>
+                <div id="signupSuccess" class="auth-success hidden"></div>
+            </form>
+
+            <!-- Footer -->
+            <div class="footer">
+                <p>Powered by <strong>University of Port-Harcourt</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>
