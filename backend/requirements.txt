@@ -5,9 +5,8 @@ Werkzeug==3.0.1
 # CORS Support for Frontend Communication
 Flask-CORS==4.0.0
 
-# MongoDB Database Driver
-pymongo[srv]==4.6.0
-dnspython==2.4.2
+# MySQL Database Driver
+mysql-connector-python==8.2.0
 
 # Environment Variables Management
 python-dotenv==1.0.0

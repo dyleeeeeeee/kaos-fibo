@@ -869,10 +869,11 @@ body {
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(4px);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     z-index: 1000;
-    padding: 1rem;
+    padding: 2rem 1rem;
+    overflow-y: auto;
     animation: fadeIn 0.3s ease;
 }
 
@@ -882,12 +883,12 @@ body {
     border-radius: var(--radius-lg);
     max-width: 900px;
     width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-height: none;
     padding: 2rem;
     position: relative;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     animation: slideUp 0.3s ease;
+    margin-bottom: 2rem;
 }
 
 @keyframes slideUp {
@@ -1030,16 +1031,298 @@ body {
 }
 
 .compressed-data-preview {
+    background: rgba(255, 255, 255, 0.5);
     padding: 1rem;
-    background: rgba(0, 0, 0, 0.05);
     border-radius: var(--radius-sm);
     font-family: 'Courier New', monospace;
     font-size: 0.85rem;
-    color: var(--text-primary);
     word-break: break-all;
     line-height: 1.6;
-    max-height: 200px;
+    max-height: 400px;
     overflow-y: auto;
+    transition: max-height var(--transition-normal);
+}
+
+.show-more-btn {
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: rgba(107, 159, 232, 0.1);
+    border: 1px solid var(--accent-blue);
+    border-radius: var(--radius-sm);
+    color: var(--accent-blue);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.show-more-btn:hover {
+    background: rgba(107, 159, 232, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Loading Indicators */
+.loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    gap: 1rem;
+}
+
+.loading-indicator.hidden {
+    display: none;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(107, 159, 232, 0.2);
+    border-top-color: var(--accent-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-indicator p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 400px;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid var(--accent-blue);
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.toast-show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast-icon {
+    font-size: 1.25rem;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+}
+
+.toast-message {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.toast-success {
+    border-left-color: var(--success-green);
+}
+
+.toast-success .toast-icon {
+    color: var(--success-green);
+}
+
+.toast-error {
+    border-left-color: var(--error-red);
+}
+
+.toast-error .toast-icon {
+    color: var(--error-red);
+}
+
+.toast-warning {
+    border-left-color: #FFA500;
+}
+
+.toast-warning .toast-icon {
+    color: #FFA500;
+}
+
+.toast-info {
+    border-left-color: var(--accent-blue);
+}
+
+.toast-info .toast-icon {
+    color: var(--accent-blue);
+}
+
+@media (max-width: 640px) {
+    .toast-container {
+        right: 1rem;
+        left: 1rem;
+        bottom: 1rem;
+        max-width: none;
+    }
+    
+    .toast {
+        padding: 0.875rem 1rem;
+    }
+    
+    .toast-message {
+        font-size: 0.85rem;
+    }
+}
+
+/* Modal Download Section */
+.modal-download-section {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(107, 159, 232, 0.15), rgba(54, 162, 235, 0.1));
+    border-radius: var(--radius-md);
+    border: 2px dashed rgba(107, 159, 232, 0.3);
+    text-align: center;
+}
+
+.download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, var(--accent-blue), rgba(54, 162, 235, 0.9));
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    box-shadow: 0 4px 12px rgba(107, 159, 232, 0.3);
+}
+
+.download-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(107, 159, 232, 0.4);
+    background: linear-gradient(135deg, rgba(54, 162, 235, 1), var(--accent-blue));
+}
+
+.download-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(107, 159, 232, 0.3);
+}
+
+.download-icon {
+    font-size: 1.5rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+.download-text {
+    font-size: 1rem;
+}
+
+.download-size {
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.original-size {
+    font-size: 0.75rem;
+    font-weight: 400;
+    opacity: 0.85;
+}
+
+/* Modal Charts */
+.modal-charts-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(107, 159, 232, 0.05);
+    border-radius: var(--radius-md);
+}
+
+.modal-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.modal-chart-container {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    min-height: 250px;
+}
+
+.modal-chart-container .chart-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    text-align: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(107, 159, 232, 0.2);
+}
+
+.modal-chart-container canvas {
+    max-height: 200px;
+    width: 100% !important;
+    height: auto !important;
+}
+
+.modal-chart-container-wide {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 1.25rem;
+    border-radius: var(--radius-sm);
+    margin-top: 1rem;
+    min-height: 300px;
+}
+
+.modal-chart-container-wide .chart-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    text-align: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(107, 159, 232, 0.2);
+}
+
+.modal-chart-container-wide canvas {
+    max-height: 280px;
+    width: 100% !important;
+    height: auto !important;
 }
 
 /* ================================================
@@ -1648,14 +1931,12 @@ body {
     
     /* Modal mobile responsiveness */
     .modal {
-        padding: 0.5rem;
-        align-items: flex-start;
+        padding: 1rem 0.5rem;
     }
     
     .modal-content {
         padding: 1.5rem 1rem;
-        max-height: 95vh;
-        margin-top: 1rem;
+        max-height: none;
         border-radius: var(--radius-md);
     }
     
@@ -1694,6 +1975,61 @@ body {
     
     .metric-value {
         font-size: 0.9rem;
+    }
+    
+    /* Modal download responsive */
+    .modal-download-section {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .download-btn {
+        padding: 0.875rem 1.5rem;
+        font-size: 0.9rem;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .download-icon {
+        font-size: 1.25rem;
+    }
+    
+    .download-text {
+        font-size: 0.9rem;
+    }
+    
+    .download-size {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+    }
+    
+    .original-size {
+        font-size: 0.7rem;
+    }
+    
+    /* Modal charts responsive */
+    .modal-charts-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .modal-chart-container {
+        min-height: 220px;
+        padding: 0.75rem;
+    }
+    
+    .modal-chart-container canvas {
+        max-height: 180px;
+    }
+    
+    .modal-chart-container-wide {
+        min-height: 250px;
+        padding: 1rem;
+    }
+    
+    .modal-chart-container-wide canvas {
+        max-height: 240px;
     }
     
     /* Auth required overlay mobile */
@@ -1821,8 +2157,7 @@ body {
     }
     .modal-content {
         padding: 1rem 0.75rem;
-        max-height: 98vh;
-        margin-top: 0.5rem;
+        max-height: none;
     }
     
     .modal-content h3 {
@@ -1988,3 +2323,7 @@ body {
     color: var(--text-secondary);
     line-height: 1.6;
 }
+
+/* ================================================
+   UNUSED - Charts moved to modal
+   ================================================ */

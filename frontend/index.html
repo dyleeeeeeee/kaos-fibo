@@ -110,7 +110,7 @@
                             <span class="file-text">Choose CSV File</span>
                         </label>
                     </div>
-                    <p class="input-hint">Supported format: CSV (comma-separated values with numerical data)</p>
+                    <p class="input-hint">Supported format: CSV (comma-separated values with numerical data) • Maximum size: 10MB</p>
                     
                     <!-- File Info Display -->
                     <div id="fileInfo" class="file-info hidden">
@@ -308,6 +308,13 @@
             <!-- History Table -->
             <div class="table-container">
                 <h3 class="table-header">📊 Compression History</h3>
+                
+                <!-- Loading Indicator -->
+                <div id="historyLoading" class="loading-indicator hidden">
+                    <div class="spinner"></div>
+                    <p>Loading compression history...</p>
+                </div>
+                
                 <table class="history-table">
                     <thead>
                         <tr>
@@ -336,6 +343,30 @@
                 <div class="modal-content">
                     <span class="modal-close" id="modalClose">&times;</span>
                     <h3>Detailed Metrics</h3>
+                    
+                    <!-- Modal Charts Section -->
+                    <div id="modalChartsSection" class="modal-charts-section">
+                        <div class="modal-charts-grid">
+                            <!-- Compression Comparison Chart -->
+                            <div class="modal-chart-container">
+                                <h4 class="chart-title">Methods Comparison</h4>
+                                <canvas id="modalComparisonChart"></canvas>
+                            </div>
+                            
+                            <!-- Size Metrics Chart -->
+                            <div class="modal-chart-container">
+                                <h4 class="chart-title">Size Breakdown</h4>
+                                <canvas id="modalSizeChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Performance Timeline Graph (Full Width) -->
+                        <div class="modal-chart-container-wide">
+                            <h4 class="chart-title">📊 Compression Progress Over Time</h4>
+                            <canvas id="modalPerformanceChart"></canvas>
+                        </div>
+                    </div>
+                    
                     <div id="modalMetricsContent" class="modal-metrics">
                         <!-- Detailed metrics will be inserted here -->
                     </div>
@@ -349,6 +380,10 @@
         </div>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

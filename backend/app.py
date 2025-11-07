@@ -6,7 +6,8 @@ with comparative analysis against Huffman and LZW algorithms.
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from pymongo import MongoClient
+import mysql.connector
+from mysql.connector import Error as MySQLError
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from functools import wraps
@@ -17,6 +18,7 @@ import psutil
 import tracemalloc
 import csv
 import io
+import json
 import bcrypt
 import jwt
 from dotenv import load_dotenv
@@ -55,38 +57,90 @@ CORS(app, resources={
     }
 })
 
-# MongoDB Configuration
-MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
-DB_NAME = os.getenv('DB_NAME', 'fibonacci_compression')
-COLLECTION_NAME = os.getenv('COLLECTION_NAME', 'compression_logs')
+# MySQL Configuration
+MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
+MYSQL_PORT = int(os.getenv('MYSQL_PORT', 3306))
+MYSQL_USER = os.getenv('MYSQL_USER', 'root')
+MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
+MYSQL_DATABASE = os.getenv('MYSQL_DATABASE', 'fibonacci_compression')
+MYSQL_SSL_REQUIRED = os.getenv('MYSQL_SSL_REQUIRED', 'False').lower() == 'true'
 
-# Configure DNS resolver to use Google DNS (fixes Windows DNS timeout issues)
+# Initialize MySQL connection pool
 try:
-    import dns.resolver
-    resolver = dns.resolver.Resolver()
-    resolver.nameservers = ['8.8.8.8', '1.1.1.1']
-    dns.resolver.default_resolver = resolver
-    print("✓ DNS resolver configured (8.8.8.8, 1.1.1.1)")
-except ImportError:
-    print("⚠ dnspython not installed - DNS resolution may fail")
-
-# Initialize MongoDB client
-try:
-    mongo_client = MongoClient(MONGO_URI)
+    # Base connection config
+    pool_config = {
+        'pool_name': "compression_pool",
+        'pool_size': 5,
+        'pool_reset_session': True,
+        'host': MYSQL_HOST,
+        'port': MYSQL_PORT,
+        'user': MYSQL_USER,
+        'password': MYSQL_PASSWORD,
+        'database': MYSQL_DATABASE,
+        'autocommit': False
+    }
+    
+    # Add SSL configuration for cloud providers (Aiven, AWS RDS, etc.)
+    if MYSQL_SSL_REQUIRED or 'aivencloud.com' in MYSQL_HOST or 'rds.amazonaws.com' in MYSQL_HOST:
+        pool_config['ssl_disabled'] = False
+        # Aiven and most cloud providers use server-side SSL verification
+        # Client doesn't need to provide certificates
+    
+    db_pool = mysql.connector.pooling.MySQLConnectionPool(**pool_config)
+    
     # Test connection
-    mongo_client.admin.command('ping')
-    db = mongo_client[DB_NAME]
-    collection = db[COLLECTION_NAME]
-    users_collection = db['users']
+    test_conn = db_pool.get_connection()
+    test_conn.close()
     
-    # Create unique index on email for users
-    users_collection.create_index('email', unique=True)
-    
-    print(f"✓ Connected to MongoDB: {DB_NAME}")
+    print(f"✓ Connected to MySQL: {MYSQL_DATABASE}")
+    db_connected = True
 except Exception as e:
-    print(f"✗ MongoDB connection failed: {e}")
-    collection = None
-    users_collection = None
+    print(f"✗ MySQL connection failed: {e}")
+    db_pool = None
+    db_connected = False
+
+# ================================================
+# DATABASE UTILITIES
+# ================================================
+
+def get_db_connection():
+    """Get a database connection from the pool"""
+    if db_pool is None:
+        return None
+    try:
+        return db_pool.get_connection()
+    except Exception as e:
+        print(f"Failed to get DB connection: {e}")
+        return None
+
+
+def execute_query(query, params=None, fetch=False, fetch_one=False):
+    """Execute a MySQL query with error handling"""
+    conn = get_db_connection()
+    if conn is None:
+        return None
+    
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(query, params or ())
+        
+        if fetch_one:
+            result = cursor.fetchone()
+        elif fetch:
+            result = cursor.fetchall()
+        else:
+            conn.commit()
+            result = cursor.lastrowid
+        
+        cursor.close()
+        return result
+    except Exception as e:
+        conn.rollback()
+        print(f"Query execution failed: {e}")
+        return None
+    finally:
+        conn.close()
+
 
 # ================================================
 # AUTHENTICATION UTILITIES
@@ -132,7 +186,10 @@ def token_required(f):
         try:
             # Decode token
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            current_user = users_collection.find_one({'_id': data['user_id']})
+            
+            # Fetch user from MySQL
+            query = "SELECT * FROM users WHERE id = %s"
+            current_user = execute_query(query, (data['user_id'],), fetch_one=True)
             
             if not current_user:
                 return jsonify({'success': False, 'error': 'User not found'}), 401
@@ -469,11 +526,11 @@ def health_check():
     """
     Health check endpoint
     """
-    mongo_status = 'connected' if collection is not None else 'disconnected'
+    mysql_status = 'connected' if db_connected else 'disconnected'
     
     return jsonify({
         'status': 'healthy',
-        'mongodb': mongo_status,
+        'mysql': mysql_status,
         'timestamp': datetime.utcnow().isoformat()
     })
 
@@ -494,7 +551,7 @@ def signup():
         }
     """
     try:
-        if users_collection is None:
+        if not db_connected:
             return jsonify({
                 'success': False,
                 'error': 'Database not connected'
@@ -527,7 +584,8 @@ def signup():
             }), 400
         
         # Check if user already exists
-        existing_user = users_collection.find_one({'email': email})
+        check_query = "SELECT id FROM users WHERE email = %s"
+        existing_user = execute_query(check_query, (email,), fetch_one=True)
         if existing_user:
             return jsonify({
                 'success': False,
@@ -537,27 +595,25 @@ def signup():
         # Hash password
         hashed_password = hash_password(password)
         
-        # Create user document
-        user = {
-            'email': email,
-            'password': hashed_password,
-            'created_at': datetime.utcnow(),
-            'last_login': None
-        }
-        
         # Insert user
-        result = users_collection.insert_one(user)
-        user_id = str(result.inserted_id)
+        insert_query = "INSERT INTO users (email, password, created_at) VALUES (%s, %s, %s)"
+        user_id = execute_query(insert_query, (email, hashed_password, datetime.utcnow()))
+        
+        if user_id is None:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to create user'
+            }), 500
         
         # Generate token
-        token = generate_token(user_id, email)
+        token = generate_token(str(user_id), email)
         
         return jsonify({
             'success': True,
             'message': 'User registered successfully',
             'token': token,
             'user': {
-                'id': user_id,
+                'id': str(user_id),
                 'email': email
             }
         }), 201
@@ -585,7 +641,7 @@ def login():
         }
     """
     try:
-        if users_collection is None:
+        if not db_connected:
             return jsonify({
                 'success': False,
                 'error': 'Database not connected'
@@ -604,7 +660,8 @@ def login():
             }), 400
         
         # Find user
-        user = users_collection.find_one({'email': email})
+        query = "SELECT * FROM users WHERE email = %s"
+        user = execute_query(query, (email,), fetch_one=True)
         
         if not user:
             return jsonify({
@@ -620,13 +677,11 @@ def login():
             }), 401
         
         # Update last login
-        users_collection.update_one(
-            {'_id': user['_id']},
-            {'$set': {'last_login': datetime.utcnow()}}
-        )
+        update_query = "UPDATE users SET last_login = %s WHERE id = %s"
+        execute_query(update_query, (datetime.utcnow(), user['id']))
         
         # Generate token
-        user_id = str(user['_id'])
+        user_id = str(user['id'])
         token = generate_token(user_id, email)
         
         return jsonify({
@@ -661,7 +716,7 @@ def get_current_user(current_user):
         return jsonify({
             'success': True,
             'user': {
-                'id': str(current_user['_id']),
+                'id': str(current_user['id']),
                 'email': current_user['email'],
                 'created_at': current_user['created_at'].isoformat() if current_user.get('created_at') else None,
                 'last_login': current_user['last_login'].isoformat() if current_user.get('last_login') else None
@@ -726,18 +781,24 @@ def compress():
         result = perform_compression(numbers)
         
         # Store in database if available
-        if collection is not None:
+        if db_connected:
             try:
-                log_entry = {
-                    'raw_input': numbers,
-                    'compressed_data': result['compressed_data_full'],
-                    'time_taken': result['metrics']['compression_time'],
-                    'compression_ratio': result['metrics']['compression_ratio'],
-                    'size_reduction': result['metrics']['size_reduction_percentage'],
-                    'timestamp': datetime.utcnow(),
-                    'metrics': result['metrics']
-                }
-                collection.insert_one(log_entry)
+                insert_query = """
+                    INSERT INTO compression_logs 
+                    (raw_input, compressed_data, time_taken, compression_ratio, 
+                     size_reduction, timestamp, source, metrics) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                execute_query(insert_query, (
+                    json.dumps(numbers),
+                    result['compressed_data_full'],
+                    result['metrics']['compression_time'],
+                    result['metrics']['compression_ratio'],
+                    result['metrics']['size_reduction_percentage'],
+                    datetime.utcnow(),
+                    'direct_input',
+                    json.dumps(result['metrics'])
+                ))
             except Exception as e:
                 print(f"Failed to store in database: {e}")
         
@@ -825,20 +886,25 @@ def compress_file():
         }
         
         # Store in database if available
-        if collection is not None:
+        if db_connected:
             try:
-                log_entry = {
-                    'raw_input': numbers[:100],  # Store first 100 numbers to save space
-                    'compressed_data': result['compressed_data_full'],
-                    'time_taken': result['metrics']['compression_time'],
-                    'compression_ratio': result['metrics']['compression_ratio'],
-                    'size_reduction': result['metrics']['size_reduction_percentage'],
-                    'timestamp': datetime.utcnow(),
-                    'source': 'file_upload',
-                    'filename': filename,
-                    'metrics': result['metrics']
-                }
-                collection.insert_one(log_entry)
+                insert_query = """
+                    INSERT INTO compression_logs 
+                    (raw_input, compressed_data, time_taken, compression_ratio, 
+                     size_reduction, timestamp, source, filename, metrics) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                execute_query(insert_query, (
+                    json.dumps(numbers[:100]),  # Store first 100 numbers to save space
+                    result['compressed_data_full'],
+                    result['metrics']['compression_time'],
+                    result['metrics']['compression_ratio'],
+                    result['metrics']['size_reduction_percentage'],
+                    datetime.utcnow(),
+                    'file_upload',
+                    filename,
+                    json.dumps(result['metrics'])
+                ))
             except Exception as e:
                 print(f"Failed to store in database: {e}")
         
@@ -923,7 +989,7 @@ def get_logs():
         JSON array of compression records
     """
     try:
-        if collection is None:
+        if not db_connected:
             return jsonify({
                 'success': False,
                 'error': 'Database not connected'
@@ -934,15 +1000,32 @@ def get_logs():
         offset = request.args.get('offset', default=0, type=int)
         
         # Fetch logs from database
-        logs = list(collection.find(
-            {},
-            {'_id': 0}  # Exclude MongoDB _id field
-        ).sort('timestamp', -1).skip(offset).limit(limit))
+        query = """
+            SELECT id, raw_input, compressed_data, time_taken, compression_ratio, 
+                   size_reduction, timestamp, source, filename, metrics
+            FROM compression_logs
+            ORDER BY timestamp DESC
+            LIMIT %s OFFSET %s
+        """
+        logs = execute_query(query, (limit, offset), fetch=True)
         
-        # Format timestamps for JSON serialization
+        if logs is None:
+            logs = []
+        
+        # Format timestamps and parse JSON fields for JSON serialization
         for log in logs:
-            if 'timestamp' in log:
+            if 'timestamp' in log and log['timestamp']:
                 log['timestamp'] = log['timestamp'].isoformat()
+            if 'raw_input' in log and log['raw_input']:
+                try:
+                    log['raw_input'] = json.loads(log['raw_input'])
+                except:
+                    pass
+            if 'metrics' in log and log['metrics']:
+                try:
+                    log['metrics'] = json.loads(log['metrics'])
+                except:
+                    pass
         
         return jsonify(logs), 200
         
@@ -1038,7 +1121,7 @@ if __name__ == '__main__':
     print("=" * 50)
     print(f"Port: {port}")
     print(f"Debug: {debug}")
-    print(f"MongoDB: {'Connected' if collection is not None else 'Disconnected'}")
+    print(f"MySQL: {'Connected' if db_connected else 'Disconnected'}")
     print("=" * 50)
     
     app.run(host='0.0.0.0', port=port, debug=debug)

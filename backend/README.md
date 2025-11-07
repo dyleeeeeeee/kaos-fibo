@@ -6,9 +6,10 @@ Python Flask RESTful API for compressing numerical datasets using Fibonacci codi
 
 - **Fibonacci Coding**: Lossless compression based on Zeckendorf's theorem
 - **Comparative Analysis**: Benchmarks against Huffman and LZW algorithms
-- **MongoDB Integration**: Stores compression history and metrics
+- **MySQL Integration**: Stores compression history and metrics in relational database
 - **Comprehensive Metrics**: Size, performance, integrity, and resource usage
 - **RESTful API**: Clean endpoints for compression and data retrieval
+- **User Authentication**: JWT-based authentication with bcrypt password hashing
 
 ## Project Structure
 
@@ -31,7 +32,7 @@ backend/
 ### Prerequisites
 
 - **Python 3.9+** installed
-- **MongoDB Atlas** account (or local MongoDB)
+- **MySQL Server 8.0+** installed and running
 - **pip** package manager
 
 ### Step 1: Clone Repository
@@ -58,28 +59,42 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Step 4: Configure Environment Variables
+### Step 4: Configure MySQL Database
+
+1. **Set up MySQL database** (see [MYSQL_SETUP.md](MYSQL_SETUP.md) for detailed instructions):
+   ```bash
+   mysql -u root -p
+   CREATE DATABASE fibonacci_compression;
+   CREATE USER 'fib_user'@'localhost' IDENTIFIED BY 'your_password';
+   GRANT ALL PRIVILEGES ON fibonacci_compression.* TO 'fib_user'@'localhost';
+   FLUSH PRIVILEGES;
+   EXIT;
+   ```
+
+2. **Initialize database schema**:
+   ```bash
+   mysql -u fib_user -p fibonacci_compression < schema.sql
+   ```
+
+### Step 5: Configure Environment Variables
 
 1. Copy `.env.example` to `.env`:
    ```bash
    cp .env.example .env
    ```
 
-2. Edit `.env` and add your MongoDB connection string:
+2. Edit `.env` with your MySQL credentials:
    ```env
-   MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/
-   DB_NAME=fibonacci_compression
-   COLLECTION_NAME=compression_logs
+   MYSQL_HOST=localhost
+   MYSQL_PORT=3306
+   MYSQL_USER=fib_user
+   MYSQL_PASSWORD=your_password
+   MYSQL_DATABASE=fibonacci_compression
+   
+   SECRET_KEY=your-secret-key-here  # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
    ```
 
-   **Getting MongoDB Atlas Connection String:**
-   - Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-   - Create a free cluster
-   - Click "Connect" → "Connect your application"
-   - Copy the connection string
-   - Replace `<username>` and `<password>` with your credentials
-
-### Step 5: Run the Server
+### Step 6: Run the Server
 
 ```bash
 python app.py
@@ -118,7 +133,7 @@ Check API and database connectivity.
 ```json
 {
   "status": "healthy",
-  "mongodb": "connected",
+  "mysql": "connected",
   "timestamp": "2025-10-31T20:19:00.000Z"
 }
 ```
@@ -340,14 +355,18 @@ Already covered in Installation section above.
 
 ## Troubleshooting
 
-### MongoDB Connection Issues
+### MySQL Connection Issues
 
-**Error:** `ServerSelectionTimeoutError`
+**Error:** `Access denied for user` or `Can't connect to MySQL server`
 
 **Solution:**
-- Check your connection string
-- Verify network access in MongoDB Atlas (allow your IP)
-- Ensure correct username/password
+- Verify MySQL service is running: `systemctl status mysql` (Linux) or check Services (Windows)
+- Check credentials in `.env` file
+- Ensure user has correct privileges: `SHOW GRANTS FOR 'fib_user'@'localhost';`
+- Verify database exists: `SHOW DATABASES;`
+- Check firewall rules allow port 3306
+
+For detailed troubleshooting, see [MYSQL_SETUP.md](MYSQL_SETUP.md)
 
 ### CORS Errors
 
@@ -378,12 +397,21 @@ Already covered in Installation section above.
 
 ### Database Optimization
 
-- Create indexes on timestamp field:
-  ```python
-  collection.create_index([('timestamp', -1)])
+- Indexes are already created in `schema.sql`, but you can verify:
+  ```sql
+  SHOW INDEX FROM compression_logs;
+  SHOW INDEX FROM users;
   ```
-- Implement pagination for logs endpoint
-- Archive old compression logs
+- Implement pagination for logs endpoint (already supported via `limit` and `offset` params)
+- Archive old compression logs:
+  ```sql
+  DELETE FROM compression_logs WHERE timestamp < DATE_SUB(NOW(), INTERVAL 30 DAY);
+  ```
+- Monitor query performance:
+  ```sql
+  SHOW PROCESSLIST;
+  EXPLAIN SELECT * FROM compression_logs ORDER BY timestamp DESC LIMIT 100;
+  ```
 
 ## Contributing
 

@@ -174,6 +174,7 @@ const elements = {
     // History Table
     historyTableBody: document.getElementById('historyTableBody'),
     noHistory: document.getElementById('noHistory'),
+    historyLoading: document.getElementById('historyLoading'),
 };
 
 // ================================================
@@ -434,6 +435,10 @@ async function handleCsvCompress() {
         // Clear textarea
         elements.csvTextarea.value = '';
         elements.csvPreview.classList.add('hidden');
+        hideError();
+        
+        // Show success toast
+        showToast('CSV data compressed successfully!', 'success');
         
     } catch (error) {
         console.error('CSV compression error:', error);
@@ -552,6 +557,9 @@ async function handleFileCompress() {
         // Clear file selection
         clearFileSelection();
         
+        // Show success toast
+        showToast('File compressed successfully!', 'success');
+        
     } catch (error) {
         console.error('File compression error:', error);
         showError(`Failed to compress file: ${error.message}`);
@@ -623,7 +631,10 @@ async function handleCompress() {
         
         // Clear input
         elements.dataInput.value = '';
+        hideError();
         
+        // Show success toast
+        showToast('Compression completed successfully!', 'success');
     } catch (error) {
         console.error('Compression error:', error);
         showError(`Failed to compress data: ${error.message}`);
@@ -681,8 +692,13 @@ function parseInput(input) {
 function displayCompressionResults(result) {
     const metrics = result.metrics || {};
     
-    // Show metrics area
+    // Show metrics area with smooth animation
     elements.metricsArea.classList.remove('hidden');
+    
+    // Smooth scroll to metrics
+    setTimeout(() => {
+        elements.metricsArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
     
     // Animate progress bar
     animateProgressBar();
@@ -762,6 +778,443 @@ function toggleAdvancedMetrics() {
 }
 
 // ================================================
+// CHART MANAGEMENT (MODAL)
+// ================================================
+/**
+ * Modal chart instances storage
+ */
+const modalCharts = {
+    comparison: null,
+    size: null,
+    performance: null
+};
+
+/**
+ * Chart color scheme
+ */
+const chartColors = {
+    fibonacci: 'rgba(54, 162, 235, 0.8)',
+    huffman: 'rgba(255, 99, 132, 0.8)',
+    lzw: 'rgba(255, 206, 86, 0.8)',
+    original: 'rgba(255, 99, 132, 0.8)',
+    compressed: 'rgba(75, 192, 192, 0.8)',
+    primary: 'rgba(54, 162, 235, 0.8)',
+    secondary: 'rgba(153, 102, 255, 0.8)',
+    success: 'rgba(75, 192, 192, 0.8)',
+    info: 'rgba(54, 162, 235, 0.8)',
+    warning: 'rgba(255, 206, 86, 0.8)',
+    danger: 'rgba(255, 99, 132, 0.8)'
+};
+
+/**
+ * Initialize modal comparison chart
+ * @param {Object} comparative - Comparative metrics data
+ */
+function initModalComparisonChart(comparative) {
+    const ctx = document.getElementById('modalComparisonChart');
+    if (!ctx) return;
+    
+    if (modalCharts.comparison) {
+        modalCharts.comparison.destroy();
+    }
+    
+    // Extract ratios from comparative data
+    const fibRatio = parseFloat(comparative?.fibonacci?.ratio) || 0;
+    const huffmanRatio = parseFloat(comparative?.huffman?.ratio) || 0;
+    const lzwRatio = parseFloat(comparative?.lzw?.ratio) || 0;
+    
+    modalCharts.comparison = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Fibonacci', 'Huffman', 'LZW'],
+            datasets: [{
+                label: 'Compression Ratio',
+                data: [fibRatio, huffmanRatio, lzwRatio],
+                backgroundColor: [
+                    chartColors.fibonacci,
+                    chartColors.huffman,
+                    chartColors.lzw
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 206, 86, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Compression Ratio',
+                        font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 640 ? 9 : 11
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 640 ? 9 : 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Initialize modal size metrics chart
+ * @param {Object} metrics - Metrics object with size data
+ */
+function initModalSizeChart(metrics) {
+    const ctx = document.getElementById('modalSizeChart');
+    if (!ctx) return;
+    
+    if (modalCharts.size) {
+        modalCharts.size.destroy();
+    }
+    
+    // Parse size values from metrics
+    const originalSize = parseSizeValue(metrics?.original_size) || 0;
+    const compressedSize = parseSizeValue(metrics?.compressed_size) || 0;
+    const bytesSaved = parseSizeValue(metrics?.bytes_saved) || 0;
+    
+    modalCharts.size = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Original', 'Compressed', 'Saved'],
+            datasets: [{
+                label: 'Size (bytes)',
+                data: [originalSize, compressedSize, bytesSaved],
+                backgroundColor: [
+                    chartColors.danger,
+                    chartColors.success,
+                    chartColors.info
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(54, 162, 235, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Size (bytes)',
+                        font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 640 ? 9 : 11
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 640 ? 9 : 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Initialize modal performance timeline graph (line graph)
+ * @param {Object} metrics - Metrics object with performance data
+ */
+function initModalPerformanceChart(metrics) {
+    const ctx = document.getElementById('modalPerformanceChart');
+    if (!ctx) return;
+    
+    if (modalCharts.performance) {
+        modalCharts.performance.destroy();
+    }
+    
+    // Parse time values to milliseconds
+    const compressionTime = parseTimeValue(metrics.compression_time) || 0;
+    const cpuTime = parseTimeValue(metrics.cpu_time) || 0;
+    const networkLatency = parseTimeValue(metrics.network_latency, 'ms') || 0;
+    const totalTime = compressionTime + cpuTime + networkLatency;
+    
+    // Parse size values to bytes
+    const originalSize = parseSizeValue(metrics.original_size) || 0;
+    const compressedSize = parseSizeValue(metrics.compressed_size) || 0;
+    
+    // Create timeline data: Time on X-axis, Data Size on Y-axis
+    const timelineData = [
+        { time: 0, size: originalSize, label: 'Start' },
+        { time: compressionTime * 0.5, size: originalSize * 0.7, label: 'Compressing...' },
+        { time: compressionTime, size: compressedSize, label: 'Compressed' },
+        { time: compressionTime + cpuTime, size: compressedSize, label: 'CPU Done' },
+        { time: totalTime, size: compressedSize, label: 'Complete' }
+    ];
+    
+    // Create compression rate line (bytes per millisecond)
+    const compressionRate = compressionTime > 0 ? (originalSize - compressedSize) / compressionTime : 0;
+    const rateData = timelineData.map(point => {
+        if (point.time === 0) return 0;
+        if (point.time <= compressionTime) return compressionRate;
+        return 0;
+    });
+    
+    modalCharts.performance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: timelineData.map(d => d.time.toFixed(2)),
+            datasets: [
+                {
+                    label: 'Data Size (bytes)',
+                    data: timelineData.map(d => d.size),
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.15)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Compression Rate (bytes/ms)',
+                    data: rateData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    tension: 0.1,
+                    fill: false,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: window.innerWidth < 640 ? 10 : 12
+                        },
+                        usePointStyle: true,
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        title: function(context) {
+                            const dataPoint = timelineData[context[0].dataIndex];
+                            return `${dataPoint.label} (${context[0].label} ms)`;
+                        },
+                        label: function(context) {
+                            const value = context.parsed.y;
+                            if (context.datasetIndex === 0) {
+                                return `Size: ${formatBytes(value)}`;
+                            } else {
+                                return value > 0 ? `Rate: ${formatBytes(value)}/ms` : 'No compression';
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: {
+                        display: true,
+                        text: 'Time (milliseconds)',
+                        font: {
+                            size: window.innerWidth < 640 ? 10 : 12,
+                            weight: 'bold'
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 640 ? 9 : 11
+                        },
+                        callback: function(value) {
+                            return value.toFixed(1) + ' ms';
+                        }
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Data Size',
+                        font: {
+                            size: window.innerWidth < 640 ? 10 : 12,
+                            weight: 'bold'
+                        },
+                        color: 'rgba(54, 162, 235, 1)'
+                    },
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 640 ? 9 : 11
+                        },
+                        color: 'rgba(54, 162, 235, 1)',
+                        callback: function(value) {
+                            return formatBytes(value);
+                        }
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Compression Rate',
+                        font: {
+                            size: window.innerWidth < 640 ? 9 : 11,
+                            weight: 'bold'
+                        },
+                        color: 'rgba(75, 192, 192, 1)'
+                    },
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 640 ? 8 : 10
+                        },
+                        color: 'rgba(75, 192, 192, 1)',
+                        callback: function(value) {
+                            return formatBytes(value) + '/ms';
+                        }
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Parse size value string to number (in bytes)
+ * @param {string} sizeStr - Size string with unit (e.g., "1.5 KB")
+ * @returns {number} - Size in bytes
+ */
+function parseSizeValue(sizeStr) {
+    if (!sizeStr || typeof sizeStr !== 'string') return 0;
+    
+    const match = sizeStr.match(/([\d.]+)\s*(\w+)/);
+    if (!match) return 0;
+    
+    const value = parseFloat(match[1]);
+    const unit = match[2].toUpperCase();
+    
+    const multipliers = {
+        'BYTES': 1,
+        'BYTE': 1,
+        'B': 1,
+        'KB': 1024,
+        'MB': 1024 * 1024,
+        'GB': 1024 * 1024 * 1024
+    };
+    
+    return value * (multipliers[unit] || 1);
+}
+
+/**
+ * Parse time value to milliseconds
+ * @param {number|string} timeValue - Time value
+ * @param {string} inputUnit - Input unit ('s', 'ms', or 'μs')
+ * @returns {number} - Time in milliseconds
+ */
+function parseTimeValue(timeValue, inputUnit = 's') {
+    if (timeValue === undefined || timeValue === null) return 0;
+    
+    // If it's a string, try to parse it
+    if (typeof timeValue === 'string') {
+        const match = timeValue.match(/([\d.]+)(μs|ms|s)?/);
+        if (!match) return 0;
+        
+        const value = parseFloat(match[1]);
+        const unit = match[2] || 's';
+        
+        if (unit === 'μs') return value / 1000;
+        if (unit === 'ms') return value;
+        if (unit === 's') return value * 1000;
+    }
+    
+    // If it's a number
+    const value = parseFloat(timeValue);
+    if (isNaN(value)) return 0;
+    
+    if (inputUnit === 'μs') return value / 1000;
+    if (inputUnit === 'ms') return value;
+    if (inputUnit === 's') return value * 1000;
+    
+    return value;
+}
+
+// ================================================
 // HISTORY MANAGEMENT
 // ================================================
 /**
@@ -769,6 +1222,14 @@ function toggleAdvancedMetrics() {
  */
 async function loadCompressionHistory() {
     try {
+        // Show loading indicator
+        if (elements.historyLoading) {
+            elements.historyLoading.classList.remove('hidden');
+        }
+        if (elements.noHistory) {
+            elements.noHistory.classList.add('hidden');
+        }
+        
         const response = await fetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.LOGS}`);
         
         if (!response.ok) {
@@ -783,7 +1244,16 @@ async function loadCompressionHistory() {
         
     } catch (error) {
         console.error('Failed to load compression history:', error);
-        // Don't show error to user, just log it
+        // Show no history message on error
+        if (elements.noHistory) {
+            elements.noHistory.classList.remove('hidden');
+            elements.noHistory.textContent = 'Failed to load compression history. Please refresh the page.';
+        }
+    } finally {
+        // Hide loading indicator
+        if (elements.historyLoading) {
+            elements.historyLoading.classList.add('hidden');
+        }
     }
 }
 
@@ -893,6 +1363,14 @@ function showMetricsDetails(record, id) {
     const batchStats = metrics.batch_stats || {};
     
     const html = `
+        <div class="modal-download-section">
+            <button class="download-btn" onclick="downloadCompressedData(${id}, '${escapeHtml(record.compressed_data || '')}', '${metrics.method || 'fibonacci'}')">
+                <span class="download-icon">⬇️</span>
+                <span class="download-text">Download Compressed File</span>
+                <span class="download-size">${metrics.compressed_size || 'N/A'} <span class="original-size">(Original: ${metrics.original_size || 'N/A'})</span></span>
+            </button>
+        </div>
+        
         <div class="modal-section">
             <h4>📋 Record #${id}</h4>
             <p><strong>Timestamp:</strong> ${record.timestamp ? new Date(record.timestamp).toLocaleString() : '-'}</p>
@@ -1055,14 +1533,29 @@ function showMetricsDetails(record, id) {
         
         <div class="modal-section">
             <h4>💾 Compressed Data Preview</h4>
-            <div class="compressed-data-preview">
+            <div class="compressed-data-preview" id="compressedDataPreview" data-full="${escapeHtml(record.compressed_data || '')}">
                 ${truncateString(record.compressed_data, 200)}
             </div>
+            ${record.compressed_data && record.compressed_data.length > 200 ? 
+                '<button class="show-more-btn" onclick="toggleDataPreview()">Show More</button>' : ''}
         </div>
     `;
     
     elements.modalMetricsContent.innerHTML = html;
+    
+    // Initialize modal charts with the record's data
+    initModalComparisonChart(comparative);
+    initModalSizeChart(metrics);
+    initModalPerformanceChart(metrics);
+    
+    // Show modal
     elements.metricsModal.classList.remove('hidden');
+    
+    // Reset scroll position to top
+    const modalContent = elements.metricsModal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.scrollTop = 0;
+    }
 }
 
 /**
@@ -1070,6 +1563,117 @@ function showMetricsDetails(record, id) {
  */
 function closeMetricsModal() {
     elements.metricsModal.classList.add('hidden');
+}
+
+/**
+ * Download compressed data as a file
+ * @param {number} recordId - Record ID
+ * @param {string} compressedData - Compressed data string
+ * @param {string} method - Compression method used
+ */
+function downloadCompressedData(recordId, compressedData, method) {
+    if (!compressedData) {
+        showToast('No compressed data available to download', 'error');
+        return;
+    }
+    
+    try {
+        // Create blob from compressed data
+        const blob = new Blob([compressedData], { type: 'application/octet-stream' });
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Generate filename with timestamp and method
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        const filename = `compressed_${method}_record${recordId}_${timestamp}.fib`;
+        link.download = filename;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        showToast('Compressed file downloaded successfully!', 'success');
+    } catch (error) {
+        console.error('Download error:', error);
+        showToast('Failed to download compressed file', 'error');
+    }
+}
+
+/**
+ * Toggle expanded/collapsed state of compressed data preview
+ */
+function toggleDataPreview() {
+    const preview = document.getElementById('compressedDataPreview');
+    const btn = event.target;
+    
+    if (!preview) return;
+    
+    const fullData = preview.getAttribute('data-full');
+    const isExpanded = btn.textContent === 'Show Less';
+    
+    if (isExpanded) {
+        preview.textContent = truncateString(fullData, 200);
+        btn.textContent = 'Show More';
+    } else {
+        preview.textContent = fullData;
+        btn.textContent = 'Show Less';
+    }
+}
+
+/**
+ * Escape HTML to prevent XSS
+ * @param {string} str - String to escape
+ * @returns {string} - Escaped string
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+/**
+ * Show toast notification
+ * @param {string} message - Message to display
+ * @param {string} type - Type of toast ('success', 'error', 'info', 'warning')
+ * @param {number} duration - Duration in milliseconds (default: 3000)
+ */
+function showToast(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const icon = {
+        success: '✓',
+        error: '✕',
+        info: 'ℹ',
+        warning: '⚠'
+    }[type] || 'ℹ';
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${icon}</span>
+        <span class="toast-message">${escapeHtml(message)}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('toast-show'), 10);
+    
+    // Auto-remove
+    setTimeout(() => {
+        toast.classList.remove('toast-show');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
 }
 
 // ================================================
